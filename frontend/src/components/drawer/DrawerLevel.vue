@@ -37,7 +37,7 @@
             v-model.number="levelInputValue"
             type="number"
             :min="minPlayerLevel"
-            :max="maxPlayerLevel"
+            :max="maxPlayerLevelUI"
             style="font-size: 2.5em; width: 2.5em; text-align: center"
             @blur="saveLevel"
             @keyup.enter="saveLevel"
@@ -50,7 +50,7 @@
             icon
             size="small"
             variant="plain"
-            :disabled="tarkovStore.playerLevel() >= maxPlayerLevel"
+            :disabled="tarkovStore.playerLevel() >= maxPlayerLevelUI"
             @click="incrementLevel"
           >
             <v-icon class="ma-0" small> mdi-chevron-up </v-icon>
@@ -93,6 +93,9 @@
   });
   const tarkovStore = useTarkovStore();
   const { minPlayerLevel, maxPlayerLevel, playerLevels } = useTarkovData();
+  
+  // Allow setting level to maxPlayerLevel + 1
+  const maxPlayerLevelUI = computed(() => maxPlayerLevel.value + 1);
   const pmcFactionIcon = computed(() => {
     return `/img/factions/${tarkovStore.getPMCFaction()}.webp`;
   });
@@ -118,12 +121,12 @@
   function saveLevel() {
     let newLevel = parseInt(levelInputValue.value, 10);
     if (isNaN(newLevel)) newLevel = minPlayerLevel.value;
-    newLevel = Math.max(minPlayerLevel.value, Math.min(maxPlayerLevel.value, newLevel));
+    newLevel = Math.max(minPlayerLevel.value, Math.min(maxPlayerLevelUI.value, newLevel));
     tarkovStore.setLevel(newLevel);
     editingLevel.value = false;
   }
   function incrementLevel() {
-    if (tarkovStore.playerLevel() < maxPlayerLevel.value) {
+    if (tarkovStore.playerLevel() < maxPlayerLevelUI.value) {
       tarkovStore.setLevel(tarkovStore.playerLevel() + 1);
     }
   }
