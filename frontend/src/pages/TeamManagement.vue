@@ -30,7 +30,7 @@
   const TrackerTip = defineAsyncComponent(() => import('@/components/TrackerTip'));
   const TeamInvite = defineAsyncComponent(() => import('@/components/teams/TeamInvite'));
   const { useSystemStore } = useLiveData();
-  const systemStore = useSystemStore();
+  const { systemStore } = useSystemStore();
   const route = useRoute();
 </script>
 <style lang="scss" scoped></style>

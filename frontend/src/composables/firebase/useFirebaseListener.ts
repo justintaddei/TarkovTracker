@@ -41,6 +41,9 @@ export function useFirebaseListener({
       devLog(`[${storeIdForLogging}] Snapshot received`, {
         exists: snapshot.exists(),
         dataKeys: Object.keys(snapshotData),
+        tokensValue: snapshotData.tokens,
+        tokensType: typeof snapshotData.tokens,
+        fullData: snapshotData,
       });
       safePatchStore(store, snapshotData);
       clearStaleState(store, snapshotData);
