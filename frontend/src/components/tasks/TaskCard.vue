@@ -171,6 +171,7 @@
                 <i18n-t
                   keypath="page.tasks.questcard.objectiveshidden"
                   :plural="irrelevantObjectives.length"
+                  scope="global"
                 >
                   <template #count>
                     {{ irrelevantObjectives.length }}
