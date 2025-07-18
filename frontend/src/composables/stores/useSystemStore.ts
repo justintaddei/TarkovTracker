@@ -18,7 +18,7 @@ export const useSystemStore = defineStore<string, SystemState, SystemGetters>('s
       return state?.tokens?.length || 0;
     },
     userTeam(state) {
-      return state?.team || null;
+      return state.team || null;
     },
     userTeamIsOwn(state) {
       return state?.team === fireuser?.uid || false;

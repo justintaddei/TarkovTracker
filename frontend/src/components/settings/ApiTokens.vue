@@ -15,7 +15,7 @@
         lg="6"
         xl="6"
       >
-        <token-card :token="token" class="ma-2" />
+        <TokenCard :token="token" class="ma-2" />
       </v-col>
     </v-row>
   </v-container>
@@ -78,20 +78,26 @@
   </v-snackbar>
 </template>
 <script setup>
-  import { ref, defineAsyncComponent, computed } from 'vue';
+  import { ref, computed } from 'vue';
   import { useI18n } from 'vue-i18n';
   import { functions } from '@/plugins/firebase';
   import { httpsCallable } from 'firebase/functions';
   import { useLiveData } from '@/composables/livedata';
   import availablePermissions from '@/utils/api_permissions';
-  const TokenCard = defineAsyncComponent(() => import('@/components/settings/TokenCard'));
+  import TokenCard from '@/components/settings/TokenCard.vue';
   const { t } = useI18n({ useScope: 'global' });
   const { useSystemStore } = useLiveData();
-  const systemStore = useSystemStore();
+  const { systemStore } = useSystemStore();
 
-  // Use computed properties directly from the store's $state
-  const userTokens = computed(() => systemStore.$state.tokens || []);
-  const userTokenCount = computed(() => systemStore.$state.tokens?.length || 0);
+  // Use computed properties from the store's getters
+  const userTokens = computed(() => {
+    console.log('userTokens computed:', systemStore.userTokens);
+    return systemStore.userTokens;
+  });
+  const userTokenCount = computed(() => {
+    console.log('userTokenCount computed:', systemStore.userTokenCount);
+    return systemStore.userTokenCount;
+  });
 
   // New token form
   const selectOneError = ref(false);
@@ -134,11 +140,18 @@
       });
       // Add the new token to the systemStore
       if (tokenResult.value.data && tokenResult.value.data.token) {
-        systemStore.userTokens = [...systemStore.userTokens, tokenResult.value.data.token];
-        console.log(
-          'Updated systemStore.userTokens in ApiTokens.vue (reassigned):',
-          JSON.parse(JSON.stringify(systemStore.userTokens))
-        );
+        if (!systemStore.$state.tokens) {
+          systemStore.$state.tokens = [];
+        }
+        // Check if token already exists to prevent duplicates
+        const newToken = tokenResult.value.data.token;
+        if (!systemStore.$state.tokens.includes(newToken)) {
+          systemStore.$state.tokens = [...systemStore.$state.tokens, newToken];
+          console.log(
+            'Updated systemStore.tokens in ApiTokens.vue (reassigned):',
+            JSON.parse(JSON.stringify(systemStore.$state.tokens))
+          );
+        }
       }
       newTokenForm.value.reset();
       selectedPermissions.value = [];
