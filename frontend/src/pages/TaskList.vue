@@ -152,21 +152,14 @@
         </v-expansion-panels>
       </v-col>
       <v-col cols="12" class="my-1">
-        <v-lazy
+        <task-card
           v-for="(task, taskIndex) in visibleTasks"
           :key="taskIndex"
-          :options="{
-            threshold: 0.5,
-          }"
-          min-height="100"
-        >
-          <task-card
-            :task="task"
-            :active-user-view="activeUserView"
-            :needed-by="task.neededBy || []"
-            class="my-1"
-          />
-        </v-lazy>
+          :task="task"
+          :active-user-view="activeUserView"
+          :needed-by="task.neededBy || []"
+          class="my-1"
+        />
       </v-col>
     </v-row>
   </v-container>

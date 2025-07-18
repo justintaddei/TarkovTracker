@@ -1,6 +1,5 @@
 <template>
-  <v-lazy :options="{ threshold: 0.5 }" min-height="100" class="fill-height">
-    <v-sheet rounded :class="itemCardClasses">
+  <v-sheet rounded :class="itemCardClasses">
       <!-- Flexbox display -->
       <div class="fill-height">
         <div class="d-flex flex-column align-end fill-height">
@@ -135,7 +134,6 @@
         </div>
       </div>
     </v-sheet>
-  </v-lazy>
 </template>
 <script setup>
   import { defineAsyncComponent, computed, inject } from 'vue';

@@ -1,7 +1,6 @@
 <template>
   <KeepAlive>
-    <v-lazy :options="{ threshold: 0.5 }" min-height="64">
-      <v-sheet rounded :class="itemRowClasses">
+    <v-sheet rounded :class="itemRowClasses">
         <v-container fluid class="my-n1 pa-0">
           <v-row no-gutters>
             <v-col
@@ -336,7 +335,6 @@
           </v-row>
         </v-container>
       </v-sheet>
-    </v-lazy>
   </KeepAlive>
 </template>
 <script setup>

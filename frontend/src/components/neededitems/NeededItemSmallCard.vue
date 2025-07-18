@@ -1,7 +1,6 @@
 <template>
   <KeepAlive>
-    <v-lazy :options="{ threshold: 0.5 }" min-height="150" class="fill-height">
-      <v-sheet rounded style="position: relative" class="fill-height" @click="smallDialog = false">
+    <v-sheet rounded style="position: relative" class="fill-height" @click="smallDialog = false">
         <div style="position: absolute; left: 0px; top: 0px; z-index: 2">
           <v-sheet
             class="d-flex align-center item-count-sheet py-1 px-2 elevation-2"
@@ -178,7 +177,6 @@
           </v-sheet>
         </v-dialog>
       </v-sheet>
-    </v-lazy>
   </KeepAlive>
 </template>
 <script setup>
