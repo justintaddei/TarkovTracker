@@ -30,6 +30,10 @@
           stat: 'Task Objectives',
           details: 'The total unique objectives within tasks.',
         },
+        kappaTasks: {
+          stat: 'Kappa Tasks',
+          details: 'Tasks required for the Kappa container quest.',
+        },
       },
     },
     tasks: {

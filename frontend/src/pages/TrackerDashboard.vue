@@ -65,6 +65,22 @@
           </template>
         </tracker-stat>
       </v-col>
+      <v-col cols="12" sm="8" md="6" lg="4" xl="3">
+        <tracker-stat icon="mdi-trophy">
+          <template #stat>
+            {{ t('page.dashboard.stats.kappaTasks.stat') }}
+          </template>
+          <template #value> {{ completedKappaTasks }}/{{ totalKappaTasks }} </template>
+          <template #percentage>
+            {{
+              totalKappaTasks > 0 ? ((completedKappaTasks / totalKappaTasks) * 100).toFixed(1) : '0.0'
+            }}%
+          </template>
+          <template #details>
+            {{ t('page.dashboard.stats.kappaTasks.details') }}
+          </template>
+        </tracker-stat>
+      </v-col>
     </v-row>
   </v-container>
 </template>
@@ -267,6 +283,30 @@
       }
     });
     return total;
+  });
+  const totalKappaTasks = computed(() => {
+    if (!tasks.value) {
+      return 0;
+    }
+    return tasks.value.filter(
+      (task) =>
+        task &&
+        task.kappaRequired === true &&
+        (task.factionName == 'Any' || task.factionName == tarkovStore.getPMCFaction)
+    ).length;
+  });
+  const completedKappaTasks = computed(() => {
+    if (!tasks.value || !progressStore.tasksCompletions) {
+      return 0;
+    }
+    return tasks.value.filter(
+      (task) =>
+        task &&
+        task.kappaRequired === true &&
+        (task.factionName == 'Any' || task.factionName == tarkovStore.getPMCFaction) &&
+        progressStore.tasksCompletions[task.id] &&
+        progressStore.tasksCompletions[task.id].self === true
+    ).length;
   });
 </script>
 <style lang="scss" scoped></style>
