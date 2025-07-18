@@ -11,6 +11,7 @@
     "last 2 versions"
   ],
   "scripts": {
+    "dev": "concurrently \"cd frontend && npm run dev\" \"npm run emulators:local\"",
     "frontend": "cd frontend && npx vite",
     "build": "npm run build --workspaces",
     "build:functions": "npm run build --workspace=functions",
@@ -19,19 +20,19 @@
     "build:frontend:prod": "npm run build:prod --workspace=frontend",
     "emulators:start": "firebase emulators:start --only auth,functions,firestore,database,hosting",
     "emulators:local": "npm run build:functions && firebase emulators:start --import=./local_data --only auth,functions,firestore,database,hosting,pubsub",
-    "dev": "concurrently \"cd frontend && npm run dev\" \"npm:emulators:local\"",
-    "deps": "npx taze --r --I",
-    "swagger": "npm run swagger --workspace=functions",
-    "generate-swagger": "npm run build:functions && (cd functions && node lib/openapi/swagger.js)",
-    "deploy:dev": "firebase use dev && npm run build:functions && npm run generate-swagger && npm run build:frontend:dev && firebase deploy",
-    "deploy:prod": "firebase use prod && npm run build:functions && npm run generate-swagger && npm run build:frontend:prod && firebase deploy",
+    "docs": "npm run swagger --workspace=functions",
+    "docs:generate": "npm run build:functions && npm run swagger --workspace=functions",
+    "docs:serve": "npm run docs:generate && echo 'API docs generated! Open docs/index.html in your browser to view the Swagger UI.'",
+    "deploy:dev": "firebase use dev && npm run build:functions && npm run docs:generate && npm run build:frontend:dev && firebase deploy",
+    "deploy:prod": "firebase use prod && npm run build:functions && npm run docs:generate && npm run build:frontend:prod && firebase deploy",
     "lint": "eslint .",
     "lint:frontend": "eslint ./frontend",
     "lint:functions": "eslint ./functions",
     "format": "prettier --write --no-error-on-unmatched-pattern \"frontend/**/*.vue\" \"frontend/**/*.js\" \"frontend/**/*.ts\" \"functions/**/*.js\" \"functions/**/*.ts\"",
     "format:check": "prettier --check --no-error-on-unmatched-pattern \"frontend/**/*.vue\" \"frontend/**/*.js\" \"frontend/**/*.ts\" \"functions/**/*.js\" \"functions/**/*.ts\"",
     "clean": "rm -rf firebase-export-* *-debug.log firebase-debug*.log",
-    "export:data": "firebase emulators:start --import=./local_data --export-on-exit=./local_data --only auth,functions,firestore,database,hosting,pubsub"
+    "export:data": "firebase emulators:start --import=./local_data --export-on-exit=./local_data --only auth,functions,firestore,database,hosting,pubsub",
+    "deps": "npx taze --r --I"
   },
   "devDependencies": {
     "@types/d3": "^7.4.3",
