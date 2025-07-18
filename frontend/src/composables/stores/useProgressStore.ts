@@ -16,35 +16,34 @@ export const useProgressStore = defineStore('progress', () => {
 
   // Get the main Tarkov store
   const getTarkovStore = () => useTarkovStore();
-  const tarkovStore = getTarkovStore();
 
   // Computed property that combines self and teammate stores
   const teamStores = computed(() => {
     const stores: { [key: string]: Store<string, UserState> } = {};
-    
+
     // Add self store
     stores['self'] = getTarkovStore() as Store<string, UserState>;
-    
+
     // Add teammate stores
     for (const teammate of Object.keys(teammateStores.value)) {
       if (teammateStores.value[teammate]) {
         stores[teammate] = teammateStores.value[teammate];
       }
     }
-    
+
     return stores;
   });
 
   // Computed property for visible team stores (excluding hidden teammates)
   const visibleTeamStores = computed(() => {
     const visibleStores: { [key: string]: Store<string, UserState> } = {};
-    
+
     Object.entries(teamStores.value).forEach(([teamId, store]) => {
       if (!userStore.teamIsHidden(teamId)) {
         visibleStores[teamId] = store;
       }
     });
-    
+
     return visibleStores;
   });
 
@@ -68,7 +67,7 @@ export const useProgressStore = defineStore('progress', () => {
     if (!displayNameFromStore) {
       console.warn(
         `Display name for ${teamId} (storeKey: ${storeKey}) is falsy. ` +
-        `Falling back to UID substring. Store state: ${JSON.stringify(store?.$state)}`
+          `Falling back to UID substring. Store state: ${JSON.stringify(store?.$state)}`
       );
       return teamId.substring(0, 6);
     }
@@ -110,7 +109,7 @@ export const useProgressStore = defineStore('progress', () => {
     const storeKey = getTeamIndex(teamId);
     const store = teamStores.value[storeKey];
     const taskCompletion = store?.$state?.taskCompletions?.[taskId];
-    
+
     if (taskCompletion?.complete) return 'completed';
     if (taskCompletion?.failed) return 'failed';
     return 'incomplete';
@@ -122,26 +121,28 @@ export const useProgressStore = defineStore('progress', () => {
   const getProgressPercentage = (teamId: string, category: string): number => {
     const storeKey = getTeamIndex(teamId);
     const store = teamStores.value[storeKey];
-    
+
     if (!store?.$state) return 0;
-    
+
     const state = store.$state;
-    
+
     switch (category) {
-      case 'tasks':
+      case 'tasks': {
         const totalTasks = Object.keys(state.taskCompletions || {}).length;
         const completedTasks = Object.values(state.taskCompletions || {}).filter(
-          completion => completion?.complete === true
+          (completion) => completion?.complete === true
         ).length;
         return totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-        
-      case 'hideout':
+      }
+
+      case 'hideout': {
         const totalModules = Object.keys(state.hideoutModules || {}).length;
         const completedModules = Object.values(state.hideoutModules || {}).filter(
-          module => module?.complete === true
+          (module) => module?.complete === true
         ).length;
         return totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
-        
+      }
+
       default:
         return 0;
     }
@@ -157,6 +158,6 @@ export const useProgressStore = defineStore('progress', () => {
     getTarkovStore,
     hasCompletedTask,
     getTaskStatus,
-    getProgressPercentage
+    getProgressPercentage,
   };
 });

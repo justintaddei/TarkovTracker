@@ -23,12 +23,6 @@ export default defineConfig({
   },
   build: {
     sourcemap: true,
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
     rollupOptions: {
       output: {
         manualChunks(id) {

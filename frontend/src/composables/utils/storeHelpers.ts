@@ -5,12 +5,14 @@ import type { DocumentData } from 'firebase/firestore';
  * Clears store properties that are not present in the new state
  * This ensures the store doesn't retain stale data when Firebase documents are updated
  */
-export function clearStaleState(store: Store, newState?: DocumentData | Record<string, unknown>): void {
+export function clearStaleState(
+  store: Store,
+  newState?: DocumentData | Record<string, unknown>
+): void {
   try {
     const currentState = store.$state;
     const missingProperties = Object.keys(currentState).filter((key) => {
       if (typeof newState === 'undefined') return true;
-      
       try {
         return !Object.prototype.hasOwnProperty.call(newState, key);
       } catch (error) {
@@ -18,7 +20,6 @@ export function clearStaleState(store: Store, newState?: DocumentData | Record<s
         return true;
       }
     });
-
     if (missingProperties.length > 0) {
       const missingPropertiesObject = missingProperties.reduce(
         (acc, key) => {
@@ -27,7 +28,6 @@ export function clearStaleState(store: Store, newState?: DocumentData | Record<s
         },
         {} as Record<string, null>
       );
-      
       store.$patch(missingPropertiesObject);
     }
   } catch (error) {
@@ -64,16 +64,16 @@ export function resetStore(store: Store): void {
 /**
  * Development-only logging utility
  */
-export function devLog(message: string, ...args: any[]): void {
+export function devLog(message: string, ...args: unknown[]): void {
   if (import.meta.env.DEV) {
     console.log(`[DEV] ${message}`, ...args);
   }
 }
 
 /**
- * Development-only warning utility  
+ * Development-only warning utility
  */
-export function devWarn(message: string, ...args: any[]): void {
+export function devWarn(message: string, ...args: unknown[]): void {
   if (import.meta.env.DEV) {
     console.warn(`[DEV] ${message}`, ...args);
   }
@@ -82,7 +82,7 @@ export function devWarn(message: string, ...args: any[]): void {
 /**
  * Development-only error logging utility
  */
-export function devError(message: string, ...args: any[]): void {
+export function devError(message: string, ...args: unknown[]): void {
   if (import.meta.env.DEV) {
     console.error(`[DEV] ${message}`, ...args);
   }
@@ -105,27 +105,25 @@ export function safeJsonCopy<T>(obj: T): T {
 /**
  * Checks if a value is a non-empty object
  */
-export function isValidObject(value: any): value is Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value);
+export function isValidObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 /**
  * Safely gets a nested property from an object
  */
-export function safeGet<T>(obj: any, path: string, defaultValue?: T): T | undefined {
+export function safeGet<T>(obj: unknown, path: string, defaultValue?: T): T | undefined {
   try {
     const keys = path.split('.');
     let result = obj;
-    
     for (const key of keys) {
       if (result && typeof result === 'object' && key in result) {
-        result = result[key];
+        result = (result as Record<string, unknown>)[key];
       } else {
         return defaultValue;
       }
     }
-    
-    return result;
+    return result as T | undefined;
   } catch (error) {
     console.error(`Error getting property ${path}:`, error);
     return defaultValue;

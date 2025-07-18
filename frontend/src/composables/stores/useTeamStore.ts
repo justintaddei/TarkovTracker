@@ -1,11 +1,19 @@
 import { computed, ref, watch, nextTick } from 'vue';
 import { defineStore } from 'pinia';
-import { doc, collection, onSnapshot } from 'firebase/firestore';
+import {
+  doc,
+  collection,
+  onSnapshot,
+  type DocumentData,
+  type Unsubscribe,
+} from 'firebase/firestore';
 import { fireuser, firestore } from '@/plugins/firebase';
 import { useFirebaseListener } from '@/composables/firebase/useFirebaseListener';
 import { useSystemStoreWithFirebase } from './useSystemStore';
 import type { TeamState, TeamGetters } from '@/types/tarkov';
 import { devLog, devWarn } from '@/composables/utils/storeHelpers';
+import type { Store } from 'pinia';
+import type { UserState } from '@/shared_state';
 
 /**
  * Team store definition with getters for team info and members
@@ -31,18 +39,18 @@ export const useTeamStore = defineStore<string, TeamState, TeamGetters>('team', 
     teammates(state) {
       const currentMembers = state?.members;
       const currentFireUID = fireuser?.uid;
-      
-      devLog('Getting teammates', { 
-        members: currentMembers, 
-        currentUser: currentFireUID 
+
+      devLog('Getting teammates', {
+        members: currentMembers,
+        currentUser: currentFireUID,
       });
-      
+
       if (currentMembers && currentFireUID) {
-        const teammates = currentMembers.filter(member => member !== currentFireUID);
+        const teammates = currentMembers.filter((member) => member !== currentFireUID);
         devLog('Filtered teammates:', teammates);
         return teammates;
       }
-      
+
       return [];
     },
   },
@@ -59,20 +67,20 @@ export function useTeamStoreWithFirebase() {
   // Computed reference to the team document based on system store
   const teamRef = computed(() => {
     const currentSystemStateTeam = systemStore.$state.team;
-    
+
     if (fireuser.loggedIn && currentSystemStateTeam && typeof currentSystemStateTeam === 'string') {
       return doc(collection(firestore, 'team'), currentSystemStateTeam);
     }
-    
+
     return null;
   });
 
   // Custom snapshot handler for team-specific logging
-  const handleTeamSnapshot = (data: any) => {
+  const handleTeamSnapshot = (data: DocumentData | null) => {
     if (data?.members) {
       devLog('Team snapshot received', {
         memberCount: data.members.length,
-        members: data.members
+        members: data.members,
       });
     }
   };
@@ -83,14 +91,14 @@ export function useTeamStoreWithFirebase() {
     docRef: teamRef,
     unsubscribe: teamUnsubscribe,
     storeId: 'team',
-    onSnapshot: handleTeamSnapshot
+    onSnapshot: handleTeamSnapshot,
   });
 
   return {
     teamStore,
     teamRef,
     isSubscribed,
-    cleanup
+    cleanup,
   };
 }
 
@@ -99,37 +107,36 @@ export function useTeamStoreWithFirebase() {
  */
 export function useTeammateStores() {
   const { teamStore } = useTeamStoreWithFirebase();
-  const teammateStores = ref<Record<string, any>>({});
-  const teammateUnsubscribes = ref<Record<string, any>>({});
+  const teammateStores = ref<Record<string, Store<string, UserState>>>({});
+  const teammateUnsubscribes = ref<Record<string, Unsubscribe>>({});
 
   // Watch team state changes to manage teammate stores
   watch(
     () => teamStore.$state,
     async (newState, oldState) => {
       await nextTick();
-      
+
       const currentFireUID = fireuser?.uid;
-      const newTeammatesArray = newState.members?.filter(
-        (member: string) => member !== currentFireUID
-      ) || [];
-      
+      const newTeammatesArray =
+        newState.members?.filter((member: string) => member !== currentFireUID) || [];
+
       devLog('Team state changed', {
         newMembers: newState.members,
         oldMembers: oldState?.members,
         filteredTeammates: newTeammatesArray,
-        currentStoreKeys: Object.keys(teammateStores.value)
+        currentStoreKeys: Object.keys(teammateStores.value),
       });
 
       // Remove stores for teammates no longer in the team
       for (const teammate of Object.keys(teammateStores.value)) {
         if (!newTeammatesArray.includes(teammate)) {
           devLog(`Removing teammate store: ${teammate}`);
-          
+
           if (teammateUnsubscribes.value[teammate]) {
             teammateUnsubscribes.value[teammate]();
             delete teammateUnsubscribes.value[teammate];
           }
-          
+
           delete teammateStores.value[teammate];
         }
       }
@@ -158,29 +165,29 @@ export function useTeammateStores() {
       // Import required dependencies
       const { defineStore } = await import('pinia');
       const { getters, actions, defaultState } = await import('@/shared_state');
-      
+
       // Define the teammate store
       const storeDefinition = defineStore(`teammate-${teammateId}`, {
         state: () => JSON.parse(JSON.stringify(defaultState)),
         getters: getters,
         actions: actions,
       });
-      
+
       const storeInstance = storeDefinition();
       teammateStores.value[teammateId] = storeInstance;
-      
+
       // Setup Firebase listener for this teammate
       teammateUnsubscribes.value[teammateId] = onSnapshot(
         doc(firestore, 'progress', teammateId),
         (snapshot) => {
           const firestoreDocData = snapshot.data();
           const docExists = snapshot.exists();
-          
+
           devLog(`Teammate ${teammateId} snapshot`, {
             exists: docExists,
-            dataKeys: firestoreDocData ? Object.keys(firestoreDocData) : []
+            dataKeys: firestoreDocData ? Object.keys(firestoreDocData) : [],
           });
-          
+
           if (docExists && firestoreDocData) {
             storeInstance.$patch(firestoreDocData);
           } else {
@@ -205,7 +212,7 @@ export function useTeammateStores() {
 
   // Cleanup all teammate stores
   const cleanup = () => {
-    Object.values(teammateUnsubscribes.value).forEach(unsubscribe => {
+    Object.values(teammateUnsubscribes.value).forEach((unsubscribe) => {
       if (unsubscribe) unsubscribe();
     });
     teammateUnsubscribes.value = {};
@@ -215,6 +222,6 @@ export function useTeammateStores() {
   return {
     teammateStores,
     teammateUnsubscribes,
-    cleanup
+    cleanup,
   };
 }

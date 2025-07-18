@@ -1,8 +1,9 @@
+import type Graph from 'graphology';
 import type { ApolloError } from '@apollo/client/core';
 import type { Store, StateTree } from 'pinia';
 import type { Ref, ComputedRef } from 'vue';
 import type { _GettersTree } from 'pinia';
-import type { UserState, UserActions } from '@/shared_state';
+import type { UserState } from '@/shared_state';
 import type { Unsubscribe, DocumentReference, DocumentData } from 'firebase/firestore';
 
 // Core Tarkov Data Types
@@ -255,9 +256,9 @@ export interface TarkovDataComposable {
   lastHideoutQueryTime: Ref<number | null>;
   hideoutStations: Ref<HideoutStation[]>;
   hideoutModules: Ref<HideoutModule[]>;
-  hideoutGraph: Ref<any>;
+  hideoutGraph: Ref<Graph>;
   tasks: Ref<Task[]>;
-  taskGraph: Ref<any>;
+  taskGraph: Ref<Graph>;
   objectiveMaps: Ref<{ [taskId: string]: ObjectiveMapInfo[] }>;
   alternativeTasks: Ref<{ [taskId: string]: string[] }>;
   objectiveGPS: Ref<{ [taskId: string]: ObjectiveGPSInfo[] }>;
@@ -276,7 +277,7 @@ export interface TarkovDataComposable {
 export interface LiveDataComposable {
   useTeamStore: () => Store<string, TeamState, TeamGetters>;
   useSystemStore: () => Store<string, SystemState, SystemGetters>;
-  useProgressStore: () => any;
+  useProgressStore: () => Store<string, UserState>;
   teammateStores: Ref<Record<string, Store<string, UserState>>>;
   tarkovStore: Store<string, UserState>;
 }

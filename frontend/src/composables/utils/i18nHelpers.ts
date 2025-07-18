@@ -16,20 +16,20 @@ export function markI18nReady() {
  */
 export function useSafeLocale() {
   const instance = getCurrentInstance();
-  
+
   if (instance && i18nReady) {
     try {
       // Use useI18n with explicit global scope to avoid parent scope warnings
-      const { locale } = useI18n({ 
+      const { locale } = useI18n({
         useScope: 'global',
-        inheritLocale: true 
+        inheritLocale: true,
       });
       return computed(() => locale.value);
     } catch (error) {
       console.warn('[useSafeLocale] Could not access i18n context:', error);
     }
   }
-  
+
   // Fallback to browser language or English if not in component context or i18n not ready
   const browserLang = getBrowserLanguage();
   return computed(() => browserLang);

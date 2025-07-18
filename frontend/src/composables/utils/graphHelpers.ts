@@ -5,7 +5,7 @@ import Graph from 'graphology';
  */
 export function getPredecessors(graph: Graph, nodeId: string, visited: string[] = []): string[] {
   let predecessors: string[] = [];
-  
+
   try {
     predecessors = graph.inNeighbors(nodeId);
     visited.push(nodeId);
@@ -19,9 +19,7 @@ export function getPredecessors(graph: Graph, nodeId: string, visited: string[] 
       if (visited.includes(predecessor)) {
         continue;
       }
-      predecessors = predecessors.concat(
-        getPredecessors(graph, predecessor, [...visited])
-      );
+      predecessors = predecessors.concat(getPredecessors(graph, predecessor, [...visited]));
     }
   }
 
@@ -33,7 +31,7 @@ export function getPredecessors(graph: Graph, nodeId: string, visited: string[] 
  */
 export function getSuccessors(graph: Graph, nodeId: string, visited: string[] = []): string[] {
   let successors: string[] = [];
-  
+
   try {
     successors = graph.outNeighbors(nodeId);
     visited.push(nodeId);
@@ -97,7 +95,9 @@ export function safeAddEdge(graph: Graph, sourceId: string, targetId: string): v
     if (graph.hasNode(sourceId) && graph.hasNode(targetId)) {
       graph.mergeEdge(sourceId, targetId);
     } else {
-      console.warn(`Cannot add edge from ${sourceId} to ${targetId}: one or both nodes don't exist`);
+      console.warn(
+        `Cannot add edge from ${sourceId} to ${targetId}: one or both nodes don't exist`
+      );
     }
   } catch (error) {
     console.error(`Error adding edge from ${sourceId} to ${targetId}:`, error);

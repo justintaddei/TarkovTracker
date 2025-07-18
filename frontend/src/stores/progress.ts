@@ -57,11 +57,13 @@ export const useProgressStore = defineStore('progress', {
       const { teammateStores } = useLiveData();
       const stores: TeamStoresMap = {};
       stores['self'] = useTarkovStore();
-      for (const teammateId of Object.keys(teammateStores.value)) {
-        try {
-          stores[teammateId] = teammateStores.value[teammateId];
-        } catch (error) {
-          console.error(`Failed to get store for teammate ${teammateId}:`, error);
+      if (teammateStores && teammateStores.value) {
+        for (const teammateId of Object.keys(teammateStores.value)) {
+          try {
+            stores[teammateId] = teammateStores.value[teammateId];
+          } catch (error) {
+            console.error(`Failed to get store for teammate ${teammateId}:`, error);
+          }
         }
       }
       return stores;
@@ -78,7 +80,7 @@ export const useProgressStore = defineStore('progress', {
     },
     tasksCompletions(_state: ProgressState): CompletionsMap {
       const completions: CompletionsMap = {};
-      if (!tasks.value) return {};
+      if (!tasks.value || !this.visibleTeamStores) return {};
       for (const task of tasks.value as Task[]) {
         completions[task.id] = {};
         for (const teamId of Object.keys(this.visibleTeamStores)) {
@@ -92,7 +94,7 @@ export const useProgressStore = defineStore('progress', {
     gameEditionData: () => gameEditions,
     traderLevelsAchieved(_state: ProgressState): TraderLevelsMap {
       const levels: TraderLevelsMap = {};
-      if (!traders.value) return {};
+      if (!traders.value || !this.visibleTeamStores) return {};
       for (const teamId of Object.keys(this.visibleTeamStores)) {
         levels[teamId] = {};
         const store = this.visibleTeamStores[teamId];
@@ -106,6 +108,7 @@ export const useProgressStore = defineStore('progress', {
     },
     playerFaction(_state: ProgressState): FactionMap {
       const faction: FactionMap = {};
+      if (!this.visibleTeamStores) return {};
       for (const teamId of Object.keys(this.visibleTeamStores)) {
         const store = this.visibleTeamStores[teamId];
         faction[teamId] = store?.$state.pmcFaction ?? 'Unknown';
@@ -117,7 +120,7 @@ export const useProgressStore = defineStore('progress', {
       _state: ProgressState
     ): TaskAvailabilityMap {
       const available: TaskAvailabilityMap = {};
-      if (!tasks.value) return {};
+      if (!tasks.value || !this.visibleTeamStores) return {};
       for (const task of tasks.value as Task[]) {
         available[task.id] = {};
         for (const teamId of Object.keys(this.visibleTeamStores)) {
@@ -190,7 +193,7 @@ export const useProgressStore = defineStore('progress', {
     },
     objectiveCompletions(_state: ProgressState): ObjectiveCompletionsMap {
       const completions: ObjectiveCompletionsMap = {};
-      if (!objectives.value) return {};
+      if (!objectives.value || !this.visibleTeamStores) return {};
       for (const objective of objectives.value) {
         completions[objective.id] = {};
         for (const teamId of Object.keys(this.visibleTeamStores)) {
@@ -203,7 +206,7 @@ export const useProgressStore = defineStore('progress', {
     },
     hideoutLevels(_state: ProgressState): HideoutLevelMap {
       const levels: HideoutLevelMap = {};
-      if (!hideoutStations.value) return {};
+      if (!hideoutStations.value || !this.visibleTeamStores) return {};
       for (const station of hideoutStations.value) {
         if (!station || !station.id) continue;
         levels[station.id] = {};
@@ -256,6 +259,7 @@ export const useProgressStore = defineStore('progress', {
     },
     getTeamIndex(_state: ProgressState) {
       return (teamId: string): number => {
+        if (!this.visibleTeamStores) return 0;
         const index = Object.keys(this.visibleTeamStores).indexOf(teamId);
         return index > -1 ? index : 0;
       };

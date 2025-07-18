@@ -73,7 +73,9 @@
           <template #value> {{ completedKappaTasks }}/{{ totalKappaTasks }} </template>
           <template #percentage>
             {{
-              totalKappaTasks > 0 ? ((completedKappaTasks / totalKappaTasks) * 100).toFixed(1) : '0.0'
+              totalKappaTasks > 0
+                ? ((completedKappaTasks / totalKappaTasks) * 100).toFixed(1)
+                : '0.0'
             }}%
           </template>
           <template #details>

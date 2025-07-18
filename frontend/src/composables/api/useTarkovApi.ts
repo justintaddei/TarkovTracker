@@ -5,25 +5,21 @@ import tarkovDataQuery from '@/utils/tarkovdataquery';
 import tarkovHideoutQuery from '@/utils/tarkovhideoutquery';
 import languageQuery from '@/utils/languagequery';
 import { useSafeLocale, extractLanguageCode } from '@/composables/utils/i18nHelpers';
-import type { 
-  LanguageQueryResult, 
-  TarkovDataQueryResult, 
+import type {
+  LanguageQueryResult,
+  TarkovDataQueryResult,
   TarkovHideoutQueryResult,
-  StaticMapData 
+  StaticMapData,
 } from '@/types/tarkov';
-
 // Provide Apollo client
 provideApolloClient(apolloClient);
-
 // Singleton state for caching
 const isInitialized = ref(false);
 const availableLanguages = ref<string[] | null>(null);
 const staticMapData = ref<StaticMapData | null>(null);
-
 // Map data fetching
 const MAPS_URL = 'https://tarkovtracker.github.io/tarkovdata/maps.json';
 let mapPromise: Promise<StaticMapData> | null = null;
-
 /**
  * Loads static map data from external source
  */
@@ -43,30 +39,25 @@ async function loadStaticMaps(): Promise<StaticMapData> {
   }
   return mapPromise;
 }
-
 // Language extraction moved to @/composables/utils/i18nHelpers.ts
-
 /**
  * Composable for managing Tarkov API queries and language detection
  */
 export function useTarkovApi() {
   // Use safe locale helper to avoid i18n context issues
   const locale = useSafeLocale();
-  const languageCode = computed(() => 
+  const languageCode = computed(() =>
     extractLanguageCode(locale.value, availableLanguages.value || ['en'])
   );
-
   // Load static map data on mount
   onMounted(async () => {
     if (!staticMapData.value) {
       staticMapData.value = await loadStaticMaps();
     }
   });
-
   // Initialize queries only once
   if (!isInitialized.value) {
     isInitialized.value = true;
-    
     // Language Query - Get available languages
     const { onResult: onLanguageResult, onError: onLanguageError } = useQuery<LanguageQueryResult>(
       languageQuery,
@@ -77,40 +68,30 @@ export function useTarkovApi() {
         errorPolicy: 'all',
       }
     );
-
     onLanguageResult((result) => {
       availableLanguages.value = result.data?.__type?.enumValues.map(
         (enumValue) => enumValue.name
       ) ?? ['en'];
     });
-
     onLanguageError((error) => {
       console.error('Language query failed:', error);
       availableLanguages.value = ['en'];
     });
   }
-
   return {
     availableLanguages: availableLanguages,
     languageCode,
     staticMapData,
-    loadStaticMaps
+    loadStaticMaps,
   };
 }
-
 /**
  * Composable for Tarkov main data queries (tasks, maps, traders, player levels)
  */
 export function useTarkovDataQuery() {
   // Get language code from the API composable to ensure consistency
   const { languageCode: apiLanguageCode } = useTarkovApi();
-  
-  const {
-    result,
-    error,
-    loading,
-    refetch,
-  } = useQuery<TarkovDataQueryResult, { lang: string }>(
+  const { result, error, loading, refetch } = useQuery<TarkovDataQueryResult, { lang: string }>(
     tarkovDataQuery,
     () => ({ lang: apiLanguageCode.value }),
     {
@@ -120,36 +101,27 @@ export function useTarkovDataQuery() {
       enabled: computed(() => !!availableLanguages.value),
     }
   );
-
   // Watch for language changes and refetch
   watch(apiLanguageCode, (newLang, oldLang) => {
     if (oldLang !== newLang && availableLanguages.value) {
       refetch({ lang: newLang });
     }
   });
-
   return {
     result,
     error,
     loading,
     refetch,
-    languageCode: apiLanguageCode
+    languageCode: apiLanguageCode,
   };
 }
-
 /**
  * Composable for Tarkov hideout data queries
  */
 export function useTarkovHideoutQuery() {
   // Get language code from the API composable to ensure consistency
   const { languageCode: apiLanguageCode } = useTarkovApi();
-  
-  const {
-    result,
-    error,
-    loading,
-    refetch,
-  } = useQuery<TarkovHideoutQueryResult, { lang: string }>(
+  const { result, error, loading, refetch } = useQuery<TarkovHideoutQueryResult, { lang: string }>(
     tarkovHideoutQuery,
     () => ({ lang: apiLanguageCode.value }),
     {
@@ -159,19 +131,17 @@ export function useTarkovHideoutQuery() {
       enabled: computed(() => !!availableLanguages.value),
     }
   );
-
   // Watch for language changes and refetch
   watch(apiLanguageCode, (newLang, oldLang) => {
     if (oldLang !== newLang && availableLanguages.value) {
       refetch({ lang: newLang });
     }
   });
-
   return {
     result,
     error,
     loading,
     refetch,
-    languageCode: apiLanguageCode
+    languageCode: apiLanguageCode,
   };
 }

@@ -1,22 +1,23 @@
 import { ref, computed, watch } from 'vue';
 import { useTarkovDataQuery } from '@/composables/api/useTarkovApi';
-import { 
-  createGraph, 
-  getPredecessors, 
-  getSuccessors, 
-  getParents, 
+import {
+  createGraph,
+  getPredecessors,
+  getSuccessors,
+  getParents,
   getChildren,
   safeAddNode,
-  safeAddEdge 
+  safeAddEdge,
 } from '@/composables/utils/graphHelpers';
-import type { 
-  Task, 
-  TaskObjective, 
+import type {
+  Task,
+  TaskObjective,
   TaskRequirement,
   NeededItemTaskObjective,
   ObjectiveMapInfo,
-  ObjectiveGPSInfo
+  ObjectiveGPSInfo,
 } from '@/types/tarkov';
+import type Graph from 'graphology';
 
 // Disabled tasks list
 const DISABLED_TASKS: string[] = [
@@ -32,7 +33,7 @@ const DISABLED_TASKS: string[] = [
  */
 export function useTaskData() {
   const { result: queryResult, error, loading } = useTarkovDataQuery();
-  
+
   // Reactive state
   const tasks = ref<Task[]>([]);
   const taskGraph = ref(createGraph());
@@ -45,7 +46,6 @@ export function useTaskData() {
   // Computed properties
   const objectives = computed<TaskObjective[]>(() => {
     if (!tasks.value.length) return [];
-    
     const allObjectives: TaskObjective[] = [];
     tasks.value.forEach((task) => {
       task.objectives?.forEach((obj) => {
@@ -57,8 +57,8 @@ export function useTaskData() {
     return allObjectives;
   });
 
-  const enabledTasks = computed(() => 
-    tasks.value.filter(task => !DISABLED_TASKS.includes(task.id))
+  const enabledTasks = computed(() =>
+    tasks.value.filter((task) => !DISABLED_TASKS.includes(task.id))
   );
 
   /**
@@ -71,7 +71,6 @@ export function useTaskData() {
     // Add all tasks as nodes and process non-active requirements
     taskList.forEach((task) => {
       safeAddNode(newGraph, task.id);
-      
       task.taskRequirements?.forEach((requirement) => {
         if (requirement?.task?.id) {
           if (requirement.status?.includes('active')) {
@@ -133,7 +132,6 @@ export function useTaskData() {
         // Map and location data
         if (objective?.location?.id) {
           const mapId = objective.location.id;
-          
           if (!tempMapTasks[mapId]) {
             tempMapTasks[mapId] = [];
           }
@@ -190,7 +188,7 @@ export function useTaskData() {
   /**
    * Enhances tasks with graph relationship data
    */
-  const enhanceTasksWithRelationships = (taskList: Task[], graph: any) => {
+  const enhanceTasksWithRelationships = (taskList: Task[], graph: Graph) => {
     return taskList.map((task) => ({
       ...task,
       traderIcon: task.trader?.imageLink,
@@ -208,7 +206,10 @@ export function useTaskData() {
       if (newResult?.tasks) {
         const newGraph = buildTaskGraph(newResult.tasks);
         const processedData = processTaskData(newResult.tasks);
-        const enhancedTasks = enhanceTasksWithRelationships(newResult.tasks, newGraph);
+        const enhancedTasks = enhanceTasksWithRelationships(
+          newResult.tasks,
+          newGraph
+        );
 
         // Update reactive state
         tasks.value = enhancedTasks;
@@ -231,29 +232,25 @@ export function useTaskData() {
     },
     { immediate: true }
   );
-
   /**
    * Get task by ID
    */
   const getTaskById = (taskId: string): Task | undefined => {
-    return tasks.value.find(task => task.id === taskId);
+    return tasks.value.find((task) => task.id === taskId);
   };
-
   /**
    * Get tasks by trader
    */
   const getTasksByTrader = (traderId: string): Task[] => {
-    return tasks.value.filter(task => task.trader?.id === traderId);
+    return tasks.value.filter((task) => task.trader?.id === traderId);
   };
-
   /**
    * Get tasks by map
    */
   const getTasksByMap = (mapId: string): Task[] => {
     const taskIds = mapTasks.value[mapId] || [];
-    return tasks.value.filter(task => taskIds.includes(task.id));
+    return tasks.value.filter((task) => taskIds.includes(task.id));
   };
-
   /**
    * Check if task is prerequisite for another task
    */
@@ -261,7 +258,6 @@ export function useTaskData() {
     const targetTask = getTaskById(targetTaskId);
     return targetTask?.predecessors?.includes(taskId) ?? false;
   };
-
   return {
     // Reactive data
     tasks,
@@ -273,17 +269,14 @@ export function useTaskData() {
     objectiveGPS,
     mapTasks,
     neededItemTaskObjectives,
-    
     // Loading states
     loading,
     error,
-    
     // Utility functions
     getTaskById,
     getTasksByTrader,
     getTasksByMap,
     isPrerequisiteFor,
-    
     // Constants
     disabledTasks: DISABLED_TASKS,
   };

@@ -46,13 +46,13 @@ export function useSystemStoreWithFirebase() {
     store: systemStore,
     docRef: systemRef,
     unsubscribe: systemUnsubscribe,
-    storeId: 'system'
+    storeId: 'system',
   });
 
   return {
     systemStore,
     systemRef,
     isSubscribed,
-    cleanup
+    cleanup,
   };
 }

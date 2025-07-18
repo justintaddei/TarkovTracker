@@ -266,7 +266,9 @@
   const { tasks, maps, traders, loading: tasksLoading, disabledTasks } = useTarkovData();
   const userViews = computed(() => {
     let views = [];
-    const teamStoreKeys = Object.keys(progressStore.visibleTeamStores);
+    const teamStoreKeys = progressStore.visibleTeamStores
+      ? Object.keys(progressStore.visibleTeamStores)
+      : [];
 
     // Only add the "All" view if there's more than just 'self' (i.e. user is in a team with others)
     if (teamStoreKeys.length > 1) {
@@ -587,7 +589,7 @@
         for (const task of visibleTaskList) {
           let usersWhoNeedTask = [];
           let taskIsNeededBySomeone = false;
-          for (const teamId of Object.keys(progressStore.visibleTeamStores)) {
+          for (const teamId of Object.keys(progressStore.visibleTeamStores || {})) {
             const isUnlockedForUser = progressStore.unlockedTasks?.[task.id]?.[teamId] === true;
             const isCompletedByUser = progressStore.tasksCompletions?.[task.id]?.[teamId] === true;
             // Check faction requirements for this specific user
