@@ -6,7 +6,7 @@ import i18n from './plugins/i18n';
 import vuetify from './plugins/vuetify';
 import pinia from './plugins/pinia';
 import apolloClient from './plugins/apollo';
-import { VueFire, VueFireAuth } from 'vuefire';
+import { VueFire } from 'vuefire';
 import { app as fireapp } from './plugins/firebase';
 import { markInitialized, forceInitialize } from './plugins/store-initializer';
 // Base app component
@@ -46,7 +46,7 @@ setTimeout(() => {
     .use(vuetify)
     .use(VueFire, {
       firebaseApp: fireapp,
-      modules: [VueFireAuth()],
+      modules: [],
     })
     .provide(DefaultApolloClient, apolloClient)
     .mount('#app');
