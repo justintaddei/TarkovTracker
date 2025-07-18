@@ -173,7 +173,7 @@
 </template>
 <script setup>
   import { computed, defineAsyncComponent, ref } from 'vue';
-  import { useProgressStore, STASH_STATION_ID } from '@/stores/progress';
+  import { useProgressStore, STASH_STATION_ID, CULTIST_CIRCLE_STATION_ID } from '@/stores/progress';
   import { useTarkovStore } from '@/stores/tarkov';
   import { useI18n } from 'vue-i18n';
   const TarkovItem = defineAsyncComponent(() => import('@/components/TarkovItem'));
@@ -206,6 +206,11 @@
       const editionData = progressStore.gameEditionData.find((e) => e.version === editionId);
       const defaultStash = editionData?.defaultStashLevel ?? 0;
       return currentStash <= defaultStash;
+    }
+    if (props.station.id === CULTIST_CIRCLE_STATION_ID) {
+      const editionId = tarkovStore.getGameEdition();
+      // If Unheard Edition (5) or Unheard+EOD Edition (6), disable downgrade
+      return editionId === 5 || editionId === 6;
     }
     return false;
   });

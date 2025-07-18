@@ -19,6 +19,7 @@ const gameEditions: GameEdition[] = [
   { version: 3, value: 0.2, defaultStashLevel: 3 },
   { version: 4, value: 0.2, defaultStashLevel: 4 },
   { version: 5, value: 0.2, defaultStashLevel: 5 },
+  { version: 6, value: 0.2, defaultStashLevel: 5 },
 ];
 type TeamStoresMap = Record<string, StoreGeneric>;
 type CompletionsMap = Record<string, Record<string, boolean>>;
@@ -243,8 +244,8 @@ export const useProgressStore = defineStore('progress', {
             }
           } else if (station.id === CULTIST_CIRCLE_STATION_ID) {
             const gameEditionVersion = store?.$state.gameEdition ?? 0;
-            // If Unheard Edition (5), always max this station
-            if (gameEditionVersion === 5 && station.levels && station.levels.length > 0) {
+            // If Unheard Edition (5) or Unheard+EOD Edition (6), always max this station
+            if ((gameEditionVersion === 5 || gameEditionVersion === 6) && station.levels && station.levels.length > 0) {
               currentStationDisplayLevel = station.levels.length;
             } else {
               currentStationDisplayLevel = maxManuallyCompletedLevel;

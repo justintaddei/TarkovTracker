@@ -219,6 +219,7 @@
     { title: 'Prepare for Escape Edition', value: 3 },
     { title: 'Edge of Darkness (Limited Edition)', value: 4 },
     { title: 'Unheard Edition', value: 5 },
+    { title: 'Unheard + Edge Of Darkness (EOD) Edition', value: 6 },
   ];
   const currentGameEdition = computed({
     get() {

@@ -246,8 +246,8 @@ const _processHideoutStations = (
         updateStationLevelForProgress(level, currentProgress);
       }
     });
-    // Special case: If Unheard Edition (5), mark Cultist Circle as maxed
-    if (gameEdition === 5) {
+    // Special case: If Unheard Edition (5) or Unheard+EOD Edition (6), mark Cultist Circle as maxed
+    if (gameEdition === 5 || gameEdition === 6) {
       const cultistCircleStation = hideoutData.hideoutStations.find(
         (station) => station.id === CULTIST_CIRCLE_STATION_ID
       );
