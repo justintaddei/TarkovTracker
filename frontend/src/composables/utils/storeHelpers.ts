@@ -43,7 +43,9 @@ export function safePatchStore(store: Store, data: DocumentData | Record<string,
     if (data && typeof data === 'object') {
       store.$patch(data);
     } else {
-      console.warn('Invalid data provided to safePatchStore:', data);
+      if (import.meta.env.DEV) {
+        console.warn('Invalid data provided to safePatchStore:', data);
+      }
     }
   } catch (error) {
     console.error('Error patching store:', error);
@@ -65,9 +67,7 @@ export function resetStore(store: Store): void {
  * Development-only logging utility
  */
 export function devLog(message: string, ...args: unknown[]): void {
-  if (import.meta.env.DEV) {
-    console.log(`[DEV] ${message}`, ...args);
-  }
+  // Development logging disabled
 }
 
 /**

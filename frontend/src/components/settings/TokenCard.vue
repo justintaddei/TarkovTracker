@@ -1,5 +1,5 @@
 <template>
-  <v-sheet class="pa-2" color="primary" :rounded="true">
+  <v-sheet v-if="tokenDataRef && !tokenDataRef.error" class="pa-2" color="primary" :rounded="true">
     <div>
       <b>{{ $t('page.settings.card.apitokens.note_column') }}:</b>
       {{ tokenDataRef?.note }}
@@ -53,6 +53,13 @@
       ></v-btn>
     </div>
   </v-sheet>
+  <v-sheet v-else-if="tokenDataRef && tokenDataRef.error" class="pa-2" color="error" :rounded="true">
+    <div>Error loading token: {{ tokenDataRef.error }}</div>
+    <div>Token ID: {{ props.token }}</div>
+  </v-sheet>
+  <v-sheet v-else class="pa-2" color="primary" :rounded="true">
+    <v-skeleton-loader type="paragraph"></v-skeleton-loader>
+  </v-sheet>
 </template>
 <script setup>
   import { firestore, functions } from '@/plugins/firebase';
@@ -91,10 +98,14 @@
         );
       } else {
         console.error(`TokenCard (${props.token}): No such document!`);
+        // Set a fallback value to prevent infinite loading
+        tokenDataRef.value = { error: 'Document not found' };
       }
     })
     .catch((error) => {
       console.error(`TokenCard (${props.token}): Error getting document:`, error);
+      // Set a fallback value to prevent infinite loading
+      tokenDataRef.value = { error: 'Failed to load token data' };
     });
   // Computed property to retrieve the timestamp of the token creation
   const tokenCreated = computed(() => {
