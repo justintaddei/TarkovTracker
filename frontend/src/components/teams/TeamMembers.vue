@@ -49,9 +49,9 @@
   } from 'vue';
   import { useLiveData } from '@/composables/livedata';
   import { fireuser } from '@/plugins/firebase';
-  const IconCard = defineAsyncComponent(() => import('@/components/IconCard'));
+  const IconCard = defineAsyncComponent(() => import('@/components/ui/IconCard'));
   const TeammemberCard = defineAsyncComponent(() => import('@/components/teams/TeammemberCard'));
-  const TrackerTip = defineAsyncComponent(() => import('@/components/TrackerTip'));
+  const TrackerTip = defineAsyncComponent(() => import('@/components/ui/TrackerTip'));
   const { useTeamStore: useTeamStoreFunction } = useLiveData();
   const { teamStore } = useTeamStoreFunction();
   const teamMembers = ref([]);

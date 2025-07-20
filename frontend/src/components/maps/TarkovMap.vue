@@ -63,8 +63,8 @@
   const props = withDefaults(defineProps<Props>(), {
     marks: () => [],
   });
-  const MapMarker = defineAsyncComponent(() => import('@/components/MapMarker.vue'));
-  const MapZone = defineAsyncComponent(() => import('@/components/MapZone.vue'));
+  const MapMarker = defineAsyncComponent(() => import('@/components/maps/MapMarker.vue'));
+  const MapZone = defineAsyncComponent(() => import('@/components/maps/MapZone.vue'));
   const selectedFloor = ref<
     string | undefined // Changed from string | null
   >(props.map?.svg?.floors?.[props.map.svg.floors.length - 1] ?? undefined);

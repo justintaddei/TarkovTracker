@@ -107,7 +107,7 @@
   import { useLiveData } from '@/composables/livedata';
   import { useUserStore } from '@/stores/user';
   import { useTarkovStore } from '@/stores/tarkov';
-  import FittedCard from '@/components/FittedCard';
+  import FittedCard from '@/components/ui/FittedCard';
   const { t } = useI18n({ useScope: 'global' });
   const { useTeamStore, useSystemStore } = useLiveData();
   const { teamStore } = useTeamStore();

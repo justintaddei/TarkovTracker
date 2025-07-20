@@ -114,7 +114,7 @@
   import { computed, defineAsyncComponent } from 'vue';
   import { useI18n } from 'vue-i18n';
   const { t } = useI18n({ useScope: 'global' });
-  const TrackerStat = defineAsyncComponent(() => import('@/components/TrackerStat'));
+  const TrackerStat = defineAsyncComponent(() => import('@/components/dashboard/TrackerStat'));
   const { tasks, objectives } = useTarkovData();
   const progressStore = useProgressStore();
   const tarkovStore = useTarkovStore();

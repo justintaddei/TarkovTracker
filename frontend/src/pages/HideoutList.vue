@@ -60,9 +60,9 @@
   import { useProgressStore } from '@/stores/progress';
   import { useUserStore } from '@/stores/user';
   import { defineAsyncComponent } from 'vue';
-  const TrackerTip = defineAsyncComponent(() => import('@/components/TrackerTip'));
+  const TrackerTip = defineAsyncComponent(() => import('@/components/ui/TrackerTip'));
   const HideoutCard = defineAsyncComponent(() => import('@/components/hideout/HideoutCard'));
-  const RefreshButton = defineAsyncComponent(() => import('@/components/RefreshButton'));
+  const RefreshButton = defineAsyncComponent(() => import('@/components/ui/RefreshButton'));
   const { t } = useI18n({ useScope: 'global' });
   const { hideoutStations, hideoutLoading } = useTarkovData();
   const progressStore = useProgressStore();

@@ -53,7 +53,12 @@
       ></v-btn>
     </div>
   </v-sheet>
-  <v-sheet v-else-if="tokenDataRef && tokenDataRef.error" class="pa-2" color="error" :rounded="true">
+  <v-sheet
+    v-else-if="tokenDataRef && tokenDataRef.error"
+    class="pa-2"
+    color="error"
+    :rounded="true"
+  >
     <div>Error loading token: {{ tokenDataRef.error }}</div>
     <div>Token ID: {{ props.token }}</div>
   </v-sheet>

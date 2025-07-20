@@ -172,10 +172,10 @@
   import { useProgressStore } from '@/stores/progress';
   import { useTarkovStore } from '@/stores/tarkov';
 
-  const TrackerTip = defineAsyncComponent(() => import('@/components/TrackerTip'));
+  const TrackerTip = defineAsyncComponent(() => import('@/components/ui/TrackerTip'));
   const TaskCard = defineAsyncComponent(() => import('@/components/tasks/TaskCard'));
-  const RefreshButton = defineAsyncComponent(() => import('@/components/RefreshButton'));
-  const TarkovMap = defineAsyncComponent(() => import('@/components/TarkovMap'));
+  const RefreshButton = defineAsyncComponent(() => import('@/components/ui/RefreshButton'));
+  const TarkovMap = defineAsyncComponent(() => import('@/components/maps/TarkovMap'));
   const { t } = useI18n({ useScope: 'global' });
   const userStore = useUserStore();
   const progressStore = useProgressStore();

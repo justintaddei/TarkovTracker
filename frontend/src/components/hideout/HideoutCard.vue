@@ -176,7 +176,7 @@
   import { useProgressStore, STASH_STATION_ID, CULTIST_CIRCLE_STATION_ID } from '@/stores/progress';
   import { useTarkovStore } from '@/stores/tarkov';
   import { useI18n } from 'vue-i18n';
-  const TarkovItem = defineAsyncComponent(() => import('@/components/TarkovItem'));
+  const TarkovItem = defineAsyncComponent(() => import('@/components/game/TarkovItem'));
   const props = defineProps({
     station: {
       type: Object,

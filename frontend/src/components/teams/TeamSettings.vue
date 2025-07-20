@@ -15,6 +15,6 @@
 </template>
 <script setup>
   import { defineAsyncComponent } from 'vue';
-  const IconCard = defineAsyncComponent(() => import('@/components/IconCard'));
+  const IconCard = defineAsyncComponent(() => import('@/components/ui/IconCard'));
 </script>
 <style lang="scss" scoped></style>

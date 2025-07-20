@@ -208,7 +208,7 @@
   import FactionSelect from '@/components/settings/FactionSelect';
   import ApiTokens from '@/components/settings/ApiTokens';
   import DataMigrationCard from '@/components/settings/DataMigrationCard';
-  import FittedCard from '@/components/FittedCard';
+  import FittedCard from '@/components/ui/FittedCard';
 
   const tarkovStore = useTarkovStore();
   const userStore = useUserStore();
