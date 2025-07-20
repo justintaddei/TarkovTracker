@@ -21,7 +21,7 @@
   </v-container>
   <v-container v-if="showNewTokenForm">
     <!-- Form to create a user API token -->
-    <v-sheet color="secondary_dark" rounded class="pa-2">
+    <v-sheet color="secondary_dark" rounded class="pa-4">
       <v-form ref="newTokenForm" v-model="validNewToken">
         <v-text-field
           v-model="tokenName"
@@ -31,6 +31,11 @@
           density="compact"
         >
         </v-text-field>
+        
+        <v-alert v-if="selectOneError" type="error" density="compact" class="mb-3">
+          Please select at least one permission for this token.
+        </v-alert>
+        
         <!-- For each available permission flag, display it as a checkbox -->
         <v-checkbox
           v-for="(permission, permissionKey) in availablePermissions"
@@ -43,16 +48,25 @@
           hide-details
         >
         </v-checkbox>
-        <v-btn
-          :disabled="creatingToken"
-          color="success"
-          class="mr-4"
-          :loading="creatingToken"
-          append-icon="mdi-key-plus"
-          @click="createToken"
-        >
-          {{ $t('page.settings.card.apitokens.submit_new_token') }}
-        </v-btn>
+        
+        <div class="d-flex mt-3">
+          <v-btn
+            variant="outlined"
+            class="mr-2"
+            @click="cancelTokenCreation"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            :disabled="!canCreateToken"
+            color="success"
+            :loading="creatingToken"
+            append-icon="mdi-key-plus"
+            @click="createToken"
+          >
+            {{ $t('page.settings.card.apitokens.submit_new_token') }}
+          </v-btn>
+        </div>
       </v-form>
     </v-sheet>
   </v-container>
@@ -89,14 +103,12 @@
   const { useSystemStore } = useLiveData();
   const { systemStore } = useSystemStore();
 
-  // Use computed properties from the store's getters
+  // Use computed properties with direct state access (temporary workaround for getter issue)
   const userTokens = computed(() => {
-    console.log('userTokens computed:', systemStore.userTokens);
-    return systemStore.userTokens;
+    return systemStore.$state.tokens || [];
   });
   const userTokenCount = computed(() => {
-    console.log('userTokenCount computed:', systemStore.userTokenCount);
-    return systemStore.userTokenCount;
+    return systemStore.$state.tokens?.length || 0;
   });
 
   // New token form
@@ -104,8 +116,17 @@
   const newTokenForm = ref(null);
   const validNewToken = ref(false);
   const tokenName = ref('');
+  const tokenNameError = ref('');
   const selectedPermissions = ref([]);
   const selectedPermissionsCount = computed(() => selectedPermissions.value.length);
+  const canCreateToken = computed(() => {
+    return (
+      tokenName.value &&
+      tokenName.value.trim().length > 0 &&
+      selectedPermissionsCount.value > 0 &&
+      validNewToken.value
+    );
+  });
   const tokenNameRules = ref([
     (v) => !!v || 'You must enter a token description',
     (v) => v.length <= 20 || 'Token description must be less than 20 characters',
@@ -114,6 +135,16 @@
   const tokenResult = ref(null);
   const newTokenSnackbar = ref(false);
   const showNewTokenForm = ref(false);
+  
+  
+  const cancelTokenCreation = () => {
+    showNewTokenForm.value = false;
+    newTokenForm.value?.reset();
+    tokenName.value = '';
+    selectedPermissions.value = [];
+    selectOneError.value = false;
+    tokenNameError.value = '';
+  };
   const createToken = async () => {
     let { valid } = await newTokenForm.value.validate();
     if (!valid) {
@@ -138,23 +169,16 @@
         note: tokenName.value,
         permissions: selectedPermissions.value,
       });
-      // Add the new token to the systemStore
-      if (tokenResult.value.data && tokenResult.value.data.token) {
-        if (!systemStore.$state.tokens) {
-          systemStore.$state.tokens = [];
-        }
-        // Check if token already exists to prevent duplicates
-        const newToken = tokenResult.value.data.token;
-        if (!systemStore.$state.tokens.includes(newToken)) {
-          systemStore.$state.tokens = [...systemStore.$state.tokens, newToken];
-          console.log(
-            'Updated systemStore.tokens in ApiTokens.vue (reassigned):',
-            JSON.parse(JSON.stringify(systemStore.$state.tokens))
-          );
-        }
+      
+      // Note: The Firebase function automatically updates the system document with the new token
+      // The Firebase listener will sync this change to our store automatically
+      // No manual store patching needed
+      
+      if (!tokenResult.value.data || !tokenResult.value.data.token) {
+        console.error('Token not found in response. Expected: tokenResult.value.data.token');
+        console.error('Available response data:', Object.keys(tokenResult.value.data || {}));
       }
-      newTokenForm.value.reset();
-      selectedPermissions.value = [];
+      cancelTokenCreation();
       tokenResult.value = t('page.settings.card.apitokens.create_token_success');
       newTokenSnackbar.value = true;
     } catch (error) {

@@ -3,9 +3,9 @@
     <template #title>Data Migration</template>
     <template #content>
       <p class="mb-4">
-        Migrate your progress data from the old TarkovTracker site to this new instance.
+        Migrate your progress data from the old TarkovTracker site.
       </p>
-      <v-card variant="flat" class="mb-3 migration-card">
+      <v-card variant="flat" class="mb-3">
         <v-card-text>
           <MigrationSteps />
           <form @submit.prevent="migration.fetchWithApiToken">
@@ -23,23 +23,6 @@
               autocomplete="off"
               @click:append-inner="migration.showToken.value = !migration.showToken.value"
             ></v-text-field>
-            <v-text-field
-              v-model="migration.apiEndpoint.value"
-              label="Old Site API Endpoint"
-              placeholder="e.g. https://tarkovtracker.io/api/v2/progress"
-              variant="outlined"
-              :disabled="migration.fetchingApi.value"
-              :error-messages="migration.apiEndpointError.value"
-              hint="Change this only if the old site uses a different API endpoint. 
-                Must include https:// and full path."
-              persistent-hint
-              class="mb-2"
-            ></v-text-field>
-            <div class="mb-4" style="font-size: 0.95em; color: #888; text-align: left">
-              <span
-                >Endpoint being used: <code>{{ migration.apiEndpoint.value }}</code></span
-              >
-            </div>
             <div class="d-flex justify-space-between align-center">
               <div v-if="migration.fetchingApi.value">
                 <v-progress-circular
@@ -57,7 +40,7 @@
                 density="compact"
                 class="mb-0 mt-0 flex-grow-1 mr-4"
               >
-                Data fetched successfully! Confirm below to import.
+                Data ready to import
               </v-alert>
               <v-spacer v-else></v-spacer>
               <v-btn
@@ -162,15 +145,3 @@
 
   const migration = useDataMigration();
 </script>
-<style scoped>
-  code {
-    font-family: monospace;
-    white-space: pre-wrap;
-  }
-
-  .migration-card {
-    border: 1px solid rgba(var(--v-theme-primary), 0.2);
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-  }
-</style>

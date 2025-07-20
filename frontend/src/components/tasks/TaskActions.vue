@@ -8,7 +8,11 @@
         :text="t('page.tasks.questcard.completebutton')"
         @click="$emit('complete')"
       />
-      <AlternativesList v-if="task.alternatives?.length" :alternatives="task.alternatives" :tasks="tasks" />
+      <AlternativesList
+        v-if="task.alternatives?.length"
+        :alternatives="task.alternatives"
+        :tasks="tasks"
+      />
     </template>
 
     <template v-else-if="isComplete">

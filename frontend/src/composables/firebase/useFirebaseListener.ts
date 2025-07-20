@@ -43,6 +43,7 @@ export function useFirebaseListener({
         dataKeys: Object.keys(snapshotData),
         tokensValue: snapshotData.tokens,
         tokensType: typeof snapshotData.tokens,
+        tokensLength: Array.isArray(snapshotData.tokens) ? snapshotData.tokens.length : 'not array',
         fullData: snapshotData,
       });
       safePatchStore(store, snapshotData);

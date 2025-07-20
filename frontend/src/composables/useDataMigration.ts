@@ -1,18 +1,10 @@
 import { ref, computed } from 'vue'
 import { fireuser } from '@/plugins/firebase'
 import { markDataMigrated } from '@/plugins/store-initializer'
-import DataMigrationService from '@/utils/DataMigrationService'
+import DataMigrationService, { type ProgressData } from '@/utils/DataMigrationService'
 import { useTarkovStore } from '@/stores/tarkov'
 
-export interface ImportedData {
-  level?: number
-  pmcFaction?: string
-  gameEdition?: number
-  taskCompletions?: Record<string, { complete: boolean; failed: boolean }>
-  taskObjectives?: Record<string, unknown>
-  hideoutModules?: Record<string, { complete: boolean }>
-  hideoutParts?: Record<string, unknown>
-}
+export type ImportedData = ProgressData
 
 export function useDataMigration() {
   // API migration state
@@ -29,7 +21,7 @@ export function useDataMigration() {
   const importError = ref('')
   const importSuccess = ref(false)
   const confirmDialog = ref(false)
-  const importedData = ref<ImportedData | null>(null)
+  const importedData = ref<ProgressData | null>(null)
 
   // Dialog state
   const showObjectivesDetails = ref(false)
@@ -120,7 +112,7 @@ export function useDataMigration() {
     importError.value = ''
 
     try {
-      const result = await DataMigrationService.importDataToUser(fireuser.uid, importedData.value)
+      const result = await DataMigrationService.importDataToUser(fireuser.uid!, importedData.value!)
       if (result) {
         importSuccess.value = true
         markDataMigrated()

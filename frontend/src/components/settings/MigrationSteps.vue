@@ -3,27 +3,15 @@
     <div class="step-item">
       <span class="step-number">1</span>
       <span class="step-text">
-        Go to
+        Get API token from 
         <a href="https://tarkovtracker.io/settings" target="_blank" class="info-link">
           tarkovtracker.io/settings
-        </a>
+        </a> (API Tokens section)
       </span>
     </div>
     <div class="step-item">
       <span class="step-number">2</span>
-      <span class="step-text">Login if you're not already logged in</span>
-    </div>
-    <div class="step-item">
-      <span class="step-number">3</span>
-      <span class="step-text">Go to Settings > API Tokens</span>
-    </div>
-    <div class="step-item">
-      <span class="step-number">4</span>
-      <span class="step-text">Create a new token with "Get Progression" permission enabled</span>
-    </div>
-    <div class="step-item">
-      <span class="step-number">5</span>
-      <span class="step-text">Copy the token and paste it below</span>
+      <span class="step-text">Paste token below to migrate your data</span>
     </div>
   </div>
 </template>

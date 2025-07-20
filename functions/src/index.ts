@@ -61,6 +61,36 @@ type AuthenticatedHandler = (_req: AuthenticatedRequest, _res: Response) => void
 app.get('/api/token', tokenHandler.getTokenInfo as AuthenticatedHandler);
 app.get('/api/progress', progressHandler.getPlayerProgress as AuthenticatedHandler);
 app.get('/api/team/progress', progressHandler.getTeamProgress as AuthenticatedHandler);
+app.post('/api/team/create', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+    
+    // Create a mock callable request
+    const callableRequest: CallableRequest<CreateTeamData> = {
+      auth: {
+        uid: req.user.id,
+        token: req.user as any
+      },
+      data: req.body,
+      rawRequest: req as any,
+      acceptsStreaming: false
+    };
+    
+    // Call the existing logic
+    const result = await _createTeamLogic(callableRequest);
+    res.status(200).json(result);
+  } catch (error) {
+    logger.error('Error in /api/team/create:', error);
+    if (error instanceof HttpsError) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
 app.post('/api/progress/level/:levelValue', progressHandler.setPlayerLevel as AuthenticatedHandler);
 app.post('/api/progress/task/:taskId', progressHandler.updateSingleTask as AuthenticatedHandler);
 app.post('/api/progress/tasks', progressHandler.updateMultipleTasks as AuthenticatedHandler);
@@ -489,6 +519,59 @@ async function _kickTeamMemberLogic(
   }
 }
 export const createTeam = functions.https.onCall(_createTeamLogic);
+
+// Alternative HTTPS endpoint for createTeam with explicit CORS handling
+export const createTeamHttp = functions.https.onRequest(async (req, res) => {
+  // Set CORS headers
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    res.status(200).send('');
+    return;
+  }
+  
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed');
+    return;
+  }
+  
+  try {
+    // Extract auth token from Authorization header
+    const authToken = req.headers.authorization?.replace('Bearer ', '');
+    if (!authToken) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+    
+    // Verify the token
+    const decodedToken = await admin.auth().verifyIdToken(authToken);
+    
+    // Create a mock callable request
+    const callableRequest: CallableRequest<CreateTeamData> = {
+      auth: {
+        uid: decodedToken.uid,
+        token: decodedToken
+      },
+      data: req.body,
+      rawRequest: req as any,
+      acceptsStreaming: false
+    };
+    
+    // Call the existing logic
+    const result = await _createTeamLogic(callableRequest);
+    res.status(200).json(result);
+  } catch (error) {
+    logger.error('Error in createTeamHttp:', error);
+    if (error instanceof HttpsError) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
 export const joinTeam = functions.https.onCall(_joinTeamLogic);
 export const leaveTeam = functions.https.onCall(_leaveTeamLogic);
 export const kickTeamMember = functions.https.onCall(_kickTeamMemberLogic);

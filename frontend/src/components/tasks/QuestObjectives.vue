@@ -28,7 +28,6 @@
 
 <script setup>
 import { defineAsyncComponent } from 'vue'
-import { useI18n } from 'vue-i18n'
 
 const TaskObjective = defineAsyncComponent(() => import('./TaskObjective'))
 
@@ -38,7 +37,6 @@ defineProps({
   uncompletedIrrelevant: { type: Number, required: true }
 })
 
-const { t } = useI18n({ useScope: 'global' })
 </script>
 
 <style lang="scss" scoped>

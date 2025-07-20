@@ -245,7 +245,11 @@ export const useProgressStore = defineStore('progress', {
           } else if (station.id === CULTIST_CIRCLE_STATION_ID) {
             const gameEditionVersion = store?.$state.gameEdition ?? 0;
             // If Unheard Edition (5) or Unheard+EOD Edition (6), always max this station
-            if ((gameEditionVersion === 5 || gameEditionVersion === 6) && station.levels && station.levels.length > 0) {
+            if (
+              (gameEditionVersion === 5 || gameEditionVersion === 6) &&
+              station.levels &&
+              station.levels.length > 0
+            ) {
               currentStationDisplayLevel = station.levels.length;
             } else {
               currentStationDisplayLevel = maxManuallyCompletedLevel;

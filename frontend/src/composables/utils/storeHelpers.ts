@@ -66,7 +66,7 @@ export function resetStore(store: Store): void {
 /**
  * Development-only logging utility
  */
-export function devLog(message: string, ...args: unknown[]): void {
+export function devLog(_message: string, ..._args: unknown[]): void {
   // Development logging disabled
 }
 
