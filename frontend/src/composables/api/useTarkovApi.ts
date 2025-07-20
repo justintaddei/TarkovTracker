@@ -11,31 +11,21 @@ import type {
   TarkovHideoutQueryResult,
   StaticMapData,
 } from '@/types/tarkov';
+import mapsData from './maps.json';
 // Provide Apollo client
 provideApolloClient(apolloClient);
 // Singleton state for caching
 const isInitialized = ref(false);
 const availableLanguages = ref<string[] | null>(null);
 const staticMapData = ref<StaticMapData | null>(null);
-// Map data fetching
-const MAPS_URL = 'https://tarkovtracker.github.io/tarkovdata/maps.json';
+// Map data - now served locally
 let mapPromise: Promise<StaticMapData> | null = null;
 /**
- * Loads static map data from external source
+ * Loads static map data from local source
  */
 async function loadStaticMaps(): Promise<StaticMapData> {
   if (!mapPromise) {
-    mapPromise = fetch(MAPS_URL)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.statusText}`);
-        }
-        return response.json() as Promise<StaticMapData>;
-      })
-      .catch((error) => {
-        console.error('Failed to load maps:', error);
-        return {} as StaticMapData;
-      });
+    mapPromise = Promise.resolve(mapsData as StaticMapData);
   }
   return mapPromise;
 }

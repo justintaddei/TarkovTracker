@@ -139,7 +139,13 @@ export interface TarkovMap {
   id: string;
   name: string;
   normalizedName?: string;
-  svg?: string;
+  svg?: string | {
+    file: string;
+    floors: string[];
+    defaultFloor: string;
+    coordinateRotation: number;
+    bounds: number[][];
+  };
 }
 
 export interface Trader {
@@ -204,7 +210,28 @@ export interface ObjectiveGPSInfo {
 }
 
 export interface StaticMapData {
-  [key: string]: { svg?: string };
+  [key: string]: {
+    id: number;
+    tdevId: string;
+    locale: {
+      en: string;
+      ru?: string;
+    };
+    wiki?: string;
+    description?: string;
+    enemies?: string[];
+    raidDuration?: {
+      day: number;
+      night: number;
+    };
+    svg: {
+      file: string;
+      floors: string[];
+      defaultFloor: string;
+      coordinateRotation: number;
+      bounds: number[][];
+    };
+  };
 }
 
 // Store Types

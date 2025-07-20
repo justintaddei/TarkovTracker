@@ -53,7 +53,6 @@
 </template>
 <script setup lang="ts">
   import { ref, watch } from 'vue';
-
   const props = defineProps<{
     itemId: string;
     itemName: string | null;
@@ -63,21 +62,18 @@
   }>();
   const linkHover = ref(false);
   const itemIconUrl = ref(`https://assets.tarkov.dev/${props.itemId}-icon.jpg`);
-
   function handleImgError() {
     // If .jpg fails, try .webp
     if (itemIconUrl.value.endsWith('.jpg')) {
       itemIconUrl.value = `https://assets.tarkov.dev/${props.itemId}-icon.webp`;
     }
   }
-
   watch(
     () => props.itemId,
     () => {
       itemIconUrl.value = `https://assets.tarkov.dev/${props.itemId}-icon.jpg`;
     }
   );
-
   const openTarkovDevLink = () => {
     if (props.devLink) {
       window.open(props.devLink, '_blank');
@@ -88,7 +84,6 @@
       window.open(props.wikiLink, '_blank');
     }
   };
-
   const copyItemName = () => {
     if (props.itemName) {
       navigator.clipboard.writeText(props.itemName);

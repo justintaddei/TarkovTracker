@@ -1,15 +1,16 @@
 <template>
-  <v-sheet rounded :class="itemCardClasses">
+  <v-sheet ref="cardRef" rounded :class="itemCardClasses">
       <!-- Flexbox display -->
       <div class="fill-height">
         <div class="d-flex flex-column align-end fill-height">
           <!-- Item image -->
           <div class="d-flex align-self-stretch item-panel">
             <v-img
-              v-if="imageItem"
+              v-if="imageItem && isVisible"
               :src="imageItem.image512pxLink"
               :lazy-src="imageItem.baseImageLink"
               :class="itemImageClasses"
+              lazy
             >
               <template #placeholder>
                 <v-row class="fill-height ma-0" align="center" justify="center">
@@ -17,6 +18,11 @@
                 </v-row>
               </template>
             </v-img>
+            <div v-else-if="imageItem" :class="[itemImageClasses, 'image-placeholder']">
+              <v-row class="fill-height ma-0" align="center" justify="center">
+                <v-progress-circular indeterminate color="grey-lighten-5"></v-progress-circular>
+              </v-row>
+            </div>
           </div>
           <!-- Item name, directly below item image -->
           <div v-if="item" class="d-flex align-self-center mt-2 mx-2">
@@ -136,7 +142,7 @@
     </v-sheet>
 </template>
 <script setup>
-  import { defineAsyncComponent, computed, inject } from 'vue';
+  import { defineAsyncComponent, computed, inject, ref, onMounted, onUnmounted } from 'vue';
   import { useProgressStore } from '@/stores/progress';
   import { useTarkovStore } from '@/stores/tarkov';
   const TaskLink = defineAsyncComponent(() => import('@/components/tasks/TaskLink'));
@@ -162,6 +168,33 @@
     teamNeeds,
     imageItem,
   } = inject('neededitem');
+
+  // Intersection observer for lazy loading
+  const cardRef = ref(null);
+  const isVisible = ref(false);
+  let observer = null;
+
+  onMounted(() => {
+    if (cardRef.value?.$el) {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            isVisible.value = true;
+            observer?.disconnect();
+          }
+        },
+        {
+          rootMargin: '50px',
+          threshold: 0.1,
+        }
+      );
+      observer.observe(cardRef.value.$el);
+    }
+  });
+
+  onUnmounted(() => {
+    observer?.disconnect();
+  });
   const itemImageClasses = computed(() => {
     return {
       [`item-bg-${item.value.backgroundColor}`]: true,
@@ -220,5 +253,11 @@
   }
   .item-bg-blue {
     background-color: #202d32;
+  }
+  .image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(var(--v-theme-surface-variant), 0.5);
   }
 </style>

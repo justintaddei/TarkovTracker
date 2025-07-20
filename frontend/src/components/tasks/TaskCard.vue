@@ -52,6 +52,14 @@
     <v-snackbar v-model="taskStatusUpdated" :timeout="4000" color="secondary">
       {{ taskStatus }}
       <template #actions>
+        <v-btn
+          v-if="showUndoButton"
+          color="white"
+          variant="text"
+          @click="undoLastAction"
+        >
+          {{ t('page.tasks.questcard.undo') }}
+        </v-btn>
         <v-btn color="white" variant="text" @click="taskStatusUpdated = false">Close</v-btn>
       </template>
     </v-snackbar>
@@ -87,6 +95,8 @@
 
   const taskStatusUpdated = ref(false);
   const taskStatus = ref('');
+  const undoData = ref(null); // { taskId: string, taskName: string, action: 'complete' | 'uncomplete' }
+  const showUndoButton = ref(false);
 
   // Computed properties
   const isComplete = computed(() => tarkovStore.isTaskComplete(props.task.id));
@@ -166,9 +176,45 @@
   );
 
   // Methods
-  const updateTaskStatus = (statusKey, taskName = props.task.name) => {
+  const updateTaskStatus = (statusKey, taskName = props.task.name, showUndo = false) => {
     taskStatus.value = t(statusKey, { name: taskName });
     taskStatusUpdated.value = true;
+    showUndoButton.value = showUndo;
+  };
+
+  const undoLastAction = () => {
+    if (!undoData.value) return;
+    
+    const { taskId, taskName, action } = undoData.value;
+    
+    if (action === 'complete') {
+      // Undo completion by setting task as uncompleted
+      tarkovStore.setTaskUncompleted(taskId);
+      // Find the task to handle objectives and alternatives
+      const taskToUndo = tasks.value.find(task => task.id === taskId);
+      if (taskToUndo) {
+        handleTaskObjectives(taskToUndo.objectives, 'setTaskObjectiveUncomplete');
+        handleAlternatives(taskToUndo.alternatives, 'setTaskUncompleted', 'setTaskObjectiveUncomplete');
+      }
+      updateTaskStatus('page.tasks.questcard.undocomplete', taskName);
+    } else if (action === 'uncomplete') {
+      // Undo uncompleting by setting task as completed
+      tarkovStore.setTaskComplete(taskId);
+      // Find the task to handle objectives and alternatives
+      const taskToUndo = tasks.value.find(task => task.id === taskId);
+      if (taskToUndo) {
+        handleTaskObjectives(taskToUndo.objectives, 'setTaskObjectiveComplete');
+        handleAlternatives(taskToUndo.alternatives, 'setTaskFailed', 'setTaskObjectiveComplete');
+        // Ensure min level for completion
+        if (tarkovStore.playerLevel < taskToUndo.minPlayerLevel) {
+          tarkovStore.setLevel(taskToUndo.minPlayerLevel);
+        }
+      }
+      updateTaskStatus('page.tasks.questcard.undouncomplete', taskName);
+    }
+    
+    showUndoButton.value = false;
+    undoData.value = null;
   };
 
   const handleTaskObjectives = (objectives, action) => {
@@ -193,19 +239,47 @@
     }
   };
 
-  const markTaskComplete = () => {
+  const markTaskComplete = (isUndo = false) => {
+    if (!isUndo) {
+      // Store undo data before performing the action
+      undoData.value = {
+        taskId: props.task.id,
+        taskName: props.task.name,
+        action: 'complete'
+      };
+    }
+    
     tarkovStore.setTaskComplete(props.task.id);
     handleTaskObjectives(props.task.objectives, 'setTaskObjectiveComplete');
     handleAlternatives(props.task.alternatives, 'setTaskFailed', 'setTaskObjectiveComplete');
     ensureMinLevel();
-    updateTaskStatus('page.tasks.questcard.statuscomplete');
+    
+    if (isUndo) {
+      updateTaskStatus('page.tasks.questcard.undocomplete');
+    } else {
+      updateTaskStatus('page.tasks.questcard.statuscomplete', props.task.name, true);
+    }
   };
 
-  const markTaskUncomplete = () => {
+  const markTaskUncomplete = (isUndo = false) => {
+    if (!isUndo) {
+      // Store undo data before performing the action
+      undoData.value = {
+        taskId: props.task.id,
+        taskName: props.task.name,
+        action: 'uncomplete'
+      };
+    }
+    
     tarkovStore.setTaskUncompleted(props.task.id);
     handleTaskObjectives(props.task.objectives, 'setTaskObjectiveUncomplete');
     handleAlternatives(props.task.alternatives, 'setTaskUncompleted', 'setTaskObjectiveUncomplete');
-    updateTaskStatus('page.tasks.questcard.statusuncomplete');
+    
+    if (isUndo) {
+      updateTaskStatus('page.tasks.questcard.undouncomplete');
+    } else {
+      updateTaskStatus('page.tasks.questcard.statusuncomplete', props.task.name, true);
+    }
   };
 
   const markTaskAvailable = () => {

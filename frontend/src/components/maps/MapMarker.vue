@@ -80,20 +80,47 @@
       console.warn('MapMarker: Invalid or missing map bounds for map:', props.map?.name);
       return { leftPercent: 0, topPercent: 0 }; // Return default if bounds are invalid
     }
-    // Take the bounds of the map and figure out the initial relative position
+    
+    // Get original coordinates
+    let originalX = props.markLocation.positions[0].x;
+    let originalZ = props.markLocation.positions[0].z;
+    
+    // Apply coordinate rotation if specified (but keep original bounds)
+    const coordinateRotation = props.map?.svg?.coordinateRotation || 0;
+    let x = originalX;
+    let z = originalZ;
+    
+    if (coordinateRotation === 90) {
+      // Rotate 90 degrees: (x, z) -> (-z, x)
+      x = -originalZ;
+      z = originalX;
+    } else if (coordinateRotation === 180) {
+      // Rotate 180 degrees: (x, z) -> (-x, -z)
+      x = -originalX;
+      z = -originalZ;
+    } else if (coordinateRotation === 270) {
+      // Rotate 270 degrees: (x, z) -> (z, -x)
+      x = originalZ;
+      z = -originalX;
+    }
+    
+    // Use original bounds (not rotated)
     let mapLeft = bounds[0][0];
     let mapTop = bounds[0][1];
     let mapWidth = Math.max(bounds[0][0], bounds[1][0]) - Math.min(bounds[0][0], bounds[1][0]);
     let mapHeight = Math.max(bounds[0][1], bounds[1][1]) - Math.min(bounds[0][1], bounds[1][1]);
+    
     // Prevent division by zero if width or height is 0
     if (mapWidth === 0 || mapHeight === 0) {
       console.warn('MapMarker: Map width or height is zero for map:', props.map?.name);
       return { leftPercent: 0, topPercent: 0 };
     }
-    let relativeLeft = Math.abs(props.markLocation.positions[0].x - mapLeft);
-    let relativeTop = Math.abs(props.markLocation.positions[0].z - mapTop);
+    
+    let relativeLeft = Math.abs(x - mapLeft);
+    let relativeTop = Math.abs(z - mapTop);
     let relativeLeftPercent = (relativeLeft / mapWidth) * 100;
     let relativeTopPercent = (relativeTop / mapHeight) * 100;
+    
     return {
       leftPercent: relativeLeftPercent,
       topPercent: relativeTopPercent,

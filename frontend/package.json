@@ -36,7 +36,7 @@
     "vue": "^3.5.17",
     "vue-i18n": "^11.1.10",
     "vue-router": "^4.5.1",
-    "vuefire": "^3.2.1",
+    "vuefire": "^3.2.2",
     "vuetify": "^3.9.2",
     "zen-observable-ts": "^1.2.5"
   },

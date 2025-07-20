@@ -321,7 +321,32 @@
     }, 3000);
   }
   const loadingTasks = computed(() => {
-    return tasksLoading.value;
+    // Basic API loading check
+    if (tasksLoading.value) return true;
+    
+    // Check if we have tasks data
+    if (!tasks.value || tasks.value.length === 0) {
+      return true;
+    }
+    
+    // Check if progress store team data is ready
+    if (!progressStore.visibleTeamStores || Object.keys(progressStore.visibleTeamStores).length === 0) {
+      return true;
+    }
+    
+    // Check if task-specific progress computations are ready
+    // These are what TaskList actually uses to determine task availability
+    if (!progressStore.unlockedTasks || !progressStore.tasksCompletions || !progressStore.playerFaction) {
+      return true;
+    }
+    
+    // Check if the task computations have actually been calculated for some tasks
+    // (empty objects mean computations haven't run yet)
+    if (Object.keys(progressStore.unlockedTasks).length === 0 || Object.keys(progressStore.tasksCompletions).length === 0) {
+      return true;
+    }
+    
+    return false;
   });
   const reloadingTasks = ref(false);
   const visibleTasks = shallowRef([]);
@@ -504,39 +529,9 @@
     'shoot',
   ];
   const updateVisibleTasks = async function () {
-    // Guard clause: Wait until necessary data is loaded/available
-    if (tasksLoading.value) {
-      console.warn('updateVisibleTasks: TarkovData (tasks) still loading, deferring update.');
-      return; // Exit if core task data isn't loaded
-    }
-    // Guard clause: Ensure userStore getter is available
-    // (should always return boolean due to || false)
-    // Accessing the computed ref here might trigger dependencies prematurely,
-    // check the source directly if possible.
-    // We already define `hideNonKappaTasks = computed(...)`,
-    // let's trust it exists but check its value source's readiness indirectly
-    if (!tasks.value) {
-      console.warn('updateVisibleTasks: tasks.value is not ready, deferring update.');
+    // Simple guard clauses - data should be available due to global initialization
+    if (tasksLoading.value || !tasks.value || !Array.isArray(disabledTasks)) {
       return;
-    }
-    // Guard clause: Ensure disabledTasks ref exists AND its value is an array
-    if (!disabledTasks || !Array.isArray(disabledTasks)) {
-      console.warn(
-        'updateVisibleTasks: disabledTasks ref or its value is not ready, deferring update.'
-      );
-      return; // Exit if disabledTasks ref or its value isn't ready
-    }
-    // Guard clause: Check critical progressStore computed properties are ready
-    // These depend on tasks.value and store state, which might have their own timings.
-    if (
-      !progressStore.unlockedTasks ||
-      !progressStore.tasksCompletions ||
-      !progressStore.playerFaction
-    ) {
-      console.warn(
-        'updateVisibleTasks: Progress store computed values not ready, deferring update.'
-      );
-      return; // Exit if progress store data isn't ready
     }
     reloadingTasks.value = true; // Indicate we are starting the actual processing
     let visibleTaskList = JSON.parse(JSON.stringify(tasks.value));
@@ -658,27 +653,30 @@
   };
   // Watch for changes that affect visible tasks and update accordingly
   watchEffect(async () => {
-    // Explicitly check core readiness *before* calling the main function
-    // These checks ensure that we don't run the potentially expensive
-    // updateVisibleTasks function until all required async data is available.
+    // Basic readiness checks
     if (
-      tasksLoading.value || // Check if tasks are still loading
-      !tasks.value || // Check if tasks data structure exists
+      tasksLoading.value || 
+      !tasks.value || 
       !disabledTasks ||
-      !Array.isArray(disabledTasks) || // Corrected: Check the array directly, not .value
-      !progressStore.unlockedTasks || // Check progressStore readiness
+      !Array.isArray(disabledTasks) ||
+      !progressStore.unlockedTasks || 
       !progressStore.tasksCompletions ||
       !progressStore.playerFaction
     ) {
-      // One of the core dependencies isn't ready yet.
-      // watchEffect will re-run automatically when they change.
-      // No need to log here, as the effect will just silently wait.
       return;
     }
-    // All checks passed, now it's safe to run the full update.
-    reloadingTasks.value = true;
+    
+    // Wait for task-specific progress computations to be ready (race condition fix)
+    if (tasks.value.length > 0) {
+      if (!progressStore.visibleTeamStores || Object.keys(progressStore.visibleTeamStores).length === 0) {
+        return;
+      }
+      if (Object.keys(progressStore.unlockedTasks).length === 0 || Object.keys(progressStore.tasksCompletions).length === 0) {
+        return;
+      }
+    }
+    
     await updateVisibleTasks();
-    // reloadingTasks.value = false; // This is handled inside updateVisibleTasks
   });
   // Watch for changes to all of the views, and update the visible tasks
   watch(

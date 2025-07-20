@@ -12,7 +12,7 @@
           v-model="displayName"
           :label="$t('page.team.card.myteam.display_name_label')"
           icon="mdi-backspace"
-          maxlength="25"
+          :maxlength="25"
           counter
           @action="clearDisplayName"
         />
