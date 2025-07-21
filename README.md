@@ -2,6 +2,8 @@
 
 A comprehensive web application for tracking your progress in Escape From Tarkov. Track tasks, hideout upgrades, and required items while coordinating with your team.
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/N4N31IEP8Z)
+
 ## 🚨 Important Notice
 
 This is a community maintained fork of the original [TarkovTracker](https://github.com/TarkovTracker/TarkovTracker) project.
