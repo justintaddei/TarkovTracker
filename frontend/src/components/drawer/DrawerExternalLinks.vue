@@ -22,13 +22,6 @@
       :is-collapsed="props.isCollapsed"
     />
     <drawer-item
-      avatar="/img/logos/tarkovgurulogo.png"
-      locale-key="tarkovguru"
-      href="https://tarkov.guru/"
-      ext-link
-      :is-collapsed="props.isCollapsed"
-    />
-    <drawer-item
       avatar="/img/logos/tarkovchangeslogo.svg"
       locale-key="tarkovchanges"
       href="https://tarkov-changes.com/"
