@@ -4,28 +4,28 @@
       density="compact"
       color="green-darken-4"
       title="Project Status"
-      class="mb-4"
+      class="mb-3 project-status-alert"
       style="flex: 0 0 auto"
       closable
     >
       <div class="text-body-2">
-        <div class="mb-2">
+        <div class="mb-1">
           Community-maintained fork of TarkovTracker.io with automatic data updates from
           <a href="http://tarkov.dev/" target="_blank" class="text-green-lighten-2">tarkov.dev</a>
         </div>
-        <div class="d-flex flex-wrap gap-2 align-center">
+        <div class="d-flex flex-wrap gap-1 align-center" style="font-size: 0.875rem">
           <div class="d-flex align-center">
-            <v-icon icon="mdi-source-branch" size="small" class="mr-2"></v-icon>
+            <v-icon icon="mdi-source-branch" size="x-small" class="mr-1"></v-icon>
             <a :href="commitUrl" target="_blank" class="text-green-lighten-2">
               {{ commitId.slice(0, 7) }}
             </a>
           </div>
-          <div class="d-flex align-center ml-4">
-            <v-icon icon="mdi-clock-outline" size="small" class="mr-2"></v-icon>
+          <div class="d-flex align-center ml-3">
+            <v-icon icon="mdi-clock-outline" size="x-small" class="mr-1"></v-icon>
             <span class="text-caption">{{ lastUpdated }}</span>
           </div>
-          <div class="d-flex align-center ml-4">
-            <v-icon icon="mdi-github" size="small" class="mr-2"></v-icon>
+          <div class="d-flex align-center ml-3">
+            <v-icon icon="mdi-github" size="x-small" class="mr-1"></v-icon>
             <a
               href="https://github.com/tarkovtracker-org/TarkovTracker"
               target="_blank"
@@ -37,8 +37,8 @@
         </div>
       </div>
     </v-alert>
-    <v-row justify="center">
-      <v-col cols="12" sm="8" md="6" lg="4" xl="3">
+    <v-row justify="center" class="stats-row">
+      <v-col cols="12" sm="6" md="6" lg="3" xl="3" class="stats-col">
         <tracker-stat icon="mdi-progress-check">
           <template #stat>
             {{ t('page.dashboard.stats.allTasks.stat') }}
@@ -52,7 +52,7 @@
           </template>
         </tracker-stat>
       </v-col>
-      <v-col cols="12" sm="8" md="6" lg="4" xl="3">
+      <v-col cols="12" sm="6" md="6" lg="3" xl="3" class="stats-col">
         <tracker-stat icon="mdi-briefcase-search">
           <template #stat>
             {{ t('page.dashboard.stats.allObjectives.stat') }}
@@ -70,7 +70,7 @@
           </template>
         </tracker-stat>
       </v-col>
-      <v-col cols="12" sm="8" md="6" lg="4" xl="3">
+      <v-col cols="12" sm="6" md="6" lg="3" xl="3" class="stats-col">
         <tracker-stat icon="mdi-briefcase-search">
           <template #stat>
             {{ t('page.dashboard.stats.taskItems.stat') }}
@@ -86,7 +86,7 @@
           </template>
         </tracker-stat>
       </v-col>
-      <v-col cols="12" sm="8" md="6" lg="4" xl="3">
+      <v-col cols="12" sm="6" md="6" lg="3" xl="3" class="stats-col">
         <tracker-stat icon="mdi-trophy">
           <template #stat>
             {{ t('page.dashboard.stats.kappaTasks.stat') }}
@@ -348,4 +348,72 @@
     return date.toLocaleString();
   });
 </script>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.stats-row {
+  margin: 0 -8px; // Offset the column padding
+}
+
+.stats-col {
+  padding: 8px;
+  
+  // Remove the flex and height constraints that are making cards too tall
+  :deep(.v-sheet) {
+    height: auto;
+    min-height: auto;
+  }
+}
+
+// Better responsive behavior
+@media (max-width: 600px) {
+  .stats-col {
+    padding: 4px;
+    margin-bottom: 8px;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 960px) {
+  .stats-col {
+    &:nth-child(odd) {
+      padding-right: 4px;
+    }
+    &:nth-child(even) {
+      padding-left: 4px;
+    }
+  }
+}
+
+@media (min-width: 1280px) {
+  .stats-row {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+
+.project-status-alert {
+  :deep(.v-alert__content) {
+    padding: 8px 0;
+  }
+  
+  :deep(.v-alert-title) {
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+}
+
+// Make it even more compact on mobile
+@media (max-width: 600px) {
+  .project-status-alert {
+    :deep(.v-alert__content) {
+      padding: 6px 0;
+    }
+    
+    .text-body-2 {
+      font-size: 0.8rem;
+    }
+    
+    .d-flex {
+      font-size: 0.75rem !important;
+    }
+  }
+}
+</style>
