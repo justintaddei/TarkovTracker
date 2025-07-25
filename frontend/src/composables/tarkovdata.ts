@@ -6,11 +6,7 @@ export {
 } from '@/composables/api/useTarkovApi';
 export { useTaskData } from '@/composables/data/useTaskData';
 export { useHideoutData } from '@/composables/data/useHideoutData';
-export { 
-  useMapData, 
-  useTraderData, 
-  usePlayerLevelData 
-} from '@/composables/data/useMapData';
+export { useMapData, useTraderData, usePlayerLevelData } from '@/composables/data/useMapData';
 // Re-export types for backward compatibility
 export type { Task } from '@/types/tarkov';
 import { computed, ref } from 'vue';
@@ -18,17 +14,17 @@ import { useTarkovApi } from '@/composables/api/useTarkovApi';
 import { useTaskData } from '@/composables/data/useTaskData';
 import { useHideoutData } from '@/composables/data/useHideoutData';
 import { useMapData, useTraderData, usePlayerLevelData } from '@/composables/data/useMapData';
-import type { 
-  TarkovDataComposable, 
-  Task, 
-  TaskObjective, 
-  TarkovMap, 
-  Trader, 
-  PlayerLevel, 
-  HideoutStation, 
-  HideoutModule, 
-  NeededItemTaskObjective, 
-  NeededItemHideoutModule 
+import type {
+  TarkovDataComposable,
+  Task,
+  TaskObjective,
+  TarkovMap,
+  Trader,
+  PlayerLevel,
+  HideoutStation,
+  HideoutModule,
+  NeededItemTaskObjective,
+  NeededItemHideoutModule,
 } from '@/types/tarkov';
 import type { AbstractGraph } from 'graphology-types';
 // Global state variables for backward compatibility

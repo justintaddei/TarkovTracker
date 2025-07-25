@@ -98,7 +98,6 @@ export function getInitializationStatus(): InitializationStatus {
 export function forceInitialize(): void {
   if (!initializationStatus.initialized) {
     markInitialized();
-    console.debug('Store system force-marked as initialized.');
   }
 }
 // Ensure the window property type is available (already declared in main.ts)

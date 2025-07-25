@@ -34,9 +34,6 @@ export const useTarkovStore = defineStore('swapTarkov', {
         // Reset the local Pinia store state to default using $patch
         // This ensures the in-memory state reflects the reset immediately.
         this.$patch(JSON.parse(JSON.stringify(defaultState)));
-        console.log(
-          'Online profile and local Pinia state reset. localStorage may update via fireswap.'
-        );
       } catch (error) {
         console.error('Error resetting online profile:', error);
       }

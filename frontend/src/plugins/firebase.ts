@@ -1,24 +1,27 @@
 import { reactive } from 'vue';
-import { initializeApp, FirebaseOptions, type FirebaseApp } from 'firebase/app';
-import { getAnalytics, Analytics } from 'firebase/analytics';
+import { initializeApp, type FirebaseOptions } from 'firebase/app';
+import { getAnalytics } from 'firebase/analytics';
 import {
   getAuth,
   onAuthStateChanged,
   connectAuthEmulator,
   GoogleAuthProvider,
   GithubAuthProvider,
-  TwitterAuthProvider,
-  User,
-  Auth,
+  signOut,
+  signInWithPopup,
+  type User,
 } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator, Firestore } from 'firebase/firestore';
 import {
-  getFunctions,
-  connectFunctionsEmulator,
-  Functions,
-  httpsCallable,
-} from 'firebase/functions';
-import { getStorage, connectStorageEmulator, FirebaseStorage } from 'firebase/storage';
+  getFirestore,
+  connectFirestoreEmulator,
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  onSnapshot,
+} from 'firebase/firestore';
+import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'firebase/functions';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
 // Define a comprehensive type for our reactive user state
 type FireUser = {
   uid: string | null;
@@ -31,52 +34,45 @@ type FireUser = {
   lastLoginAt: string | null;
   createdAt: string | null;
 };
-// Ensure all required environment variables are present
-const requiredEnvVars = [
-  'VITE_FIREBASE_API_KEY',
-  'VITE_FIREBASE_AUTH_DOMAIN',
-  'VITE_FIREBASE_DATABASE_URL',
-  'VITE_FIREBASE_PROJECT_ID',
-  'VITE_FIREBASE_STORAGE_BUCKET',
-  'VITE_FIREBASE_MESSAGING_SENDER_ID',
-  'VITE_FIREBASE_APP_ID',
-] as const;
-// Check for missing environment variables
-const missingEnvVars = requiredEnvVars.filter((varName) => !import.meta.env[varName]);
-if (missingEnvVars.length > 0) {
-  throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
-}
-// Use environment variables for Firebase config with proper typing
-const firebaseConfig: FirebaseOptions = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL, // Added for Realtime Database
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, // Google Analytics
+// Use demo project for local development
+const isLocalDevelopment =
+  import.meta.env.DEV &&
+  (!import.meta.env.VITE_FIREBASE_PROJECT_ID ||
+    import.meta.env.VITE_FIREBASE_PROJECT_ID === 'demo-project');
+
+// Demo project configuration for local development
+const demoConfig: FirebaseOptions = {
+  apiKey: 'demo-key',
+  authDomain: 'demo-project.firebaseapp.com',
+  databaseURL: 'https://demo-project-default-rtdb.firebaseio.com',
+  projectId: 'demo-project',
+  storageBucket: 'demo-project.appspot.com',
+  messagingSenderId: '123456789',
+  appId: '1:123456789:web:demo-app-id',
+  measurementId: 'G-DEMO123', // Google Analytics
 };
-// Initialize Firebase with error handling
-let app: FirebaseApp;
-let analytics: Analytics | undefined;
-let auth: Auth;
-let firestore: Firestore;
-let functions: Functions;
-let storage: FirebaseStorage;
-try {
-  app = initializeApp(firebaseConfig);
-  if (import.meta.env.PROD) {
-    analytics = getAnalytics(app);
-  }
-  auth = getAuth(app);
-  firestore = getFirestore(app);
-  functions = getFunctions(app, 'us-central1');
-  storage = getStorage(app);
-} catch (error) {
-  console.error('Error initializing Firebase:', error);
-  throw error;
-}
+
+// Firebase configuration
+const firebaseConfig: FirebaseOptions = isLocalDevelopment
+  ? demoConfig
+  : {
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+      databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+      appId: import.meta.env.VITE_FIREBASE_APP_ID,
+      measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+    };
+
+// Initialize Firebase services
+const app = initializeApp(firebaseConfig);
+const analytics = import.meta.env.PROD ? getAnalytics(app) : undefined;
+const auth = getAuth(app);
+const firestore = getFirestore(app);
+const functions = getFunctions(app, 'us-central1');
+const storage = getStorage(app);
 // Set up a reactive object for our user state with comprehensive properties
 const fireuser = reactive<FireUser>({
   uid: null,
@@ -116,12 +112,10 @@ onAuthStateChanged(auth, (user: User | null) => {
     });
   }
 });
-// Use emulators if we're on localhost or 127.0.0.1
-if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+// Connect to emulators in development
+if (isLocalDevelopment || ['localhost', '127.0.0.1'].includes(window.location.hostname)) {
   try {
-    connectAuthEmulator(auth, 'http://localhost:9099', {
-      disableWarnings: true,
-    });
+    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
     connectFirestoreEmulator(firestore, 'localhost', 5002);
     connectFunctionsEmulator(functions, 'localhost', 5001);
     connectStorageEmulator(storage, 'localhost', 9199);
@@ -139,6 +133,12 @@ export {
   fireuser,
   GoogleAuthProvider,
   GithubAuthProvider,
-  TwitterAuthProvider,
-  httpsCallable, // Export httpsCallable for easy Cloud Functions usage
+  httpsCallable,
+  signOut,
+  signInWithPopup,
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  onSnapshot,
 };

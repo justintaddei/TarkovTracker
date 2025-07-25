@@ -1,11 +1,13 @@
-import { useLiveData } from '@/composables/livedata';
-import { fireuser } from '@/plugins/firebase';
-import { useUserStore } from '@/stores/user';
+import { computed } from 'vue';
 import { defineStore } from 'pinia';
+import { fireuser } from '@/plugins/firebase';
 import { useTarkovStore } from '@/stores/tarkov';
+import { useUserStore } from '@/stores/user';
+import { useTeammateStores } from './useTeamStore';
 import type { Task } from '@/composables/tarkovdata';
 import { tasks, traders, objectives, hideoutStations } from '@/composables/tarkovdata';
-import { StoreGeneric } from 'pinia';
+import type { Store } from 'pinia';
+import type { UserState } from '@/shared_state';
 export const STASH_STATION_ID = '5d484fc0654e76006657e0ab';
 export const CULTIST_CIRCLE_STATION_ID = '667298e75ea6b4493c08f266';
 interface GameEdition {
@@ -21,14 +23,14 @@ const gameEditions: GameEdition[] = [
   { version: 5, value: 0.2, defaultStashLevel: 5 },
   { version: 6, value: 0.2, defaultStashLevel: 5 },
 ];
-type TeamStoresMap = Record<string, StoreGeneric>;
+type TeamStoresMap = Record<string, Store<string, UserState>>;
 type CompletionsMap = Record<string, Record<string, boolean>>;
 type TraderLevelsMap = Record<string, Record<string, number>>;
 type FactionMap = Record<string, string>;
 type TaskAvailabilityMap = Record<string, Record<string, boolean>>;
 type ObjectiveCompletionsMap = Record<string, Record<string, boolean>>;
 type HideoutLevelMap = Record<string, Record<string, number>>;
-type ProgressState = object;
+/*
 type ProgressGetters = {
   teamStores: TeamStoresMap;
   visibleTeamStores: TeamStoresMap;
@@ -44,6 +46,7 @@ type ProgressGetters = {
   getLevel: (teamId: string) => number;
   getFaction: (teamId: string) => string;
 };
+*/
 // Define the Fireswap configuration type expected by the plugin
 interface FireswapConfig {
   path: string;
@@ -51,84 +54,78 @@ interface FireswapConfig {
   debouncems: number;
   localKey: string;
 }
-export const useProgressStore = defineStore('progress', {
-  state: (): ProgressState => ({}),
-  getters: {
-    teamStores(_state: ProgressState): TeamStoresMap {
-      const { teammateStores } = useLiveData();
+export const useProgressStore = defineStore(
+  'progress',
+  () => {
+    const userStore = useUserStore();
+    const { teammateStores } = useTeammateStores();
+
+    const teamStores = computed(() => {
       const stores: TeamStoresMap = {};
-      stores['self'] = useTarkovStore();
-      if (teammateStores && teammateStores.value) {
-        for (const teammateId of Object.keys(teammateStores.value)) {
-          try {
-            stores[teammateId] = teammateStores.value[teammateId];
-          } catch (error) {
-            console.error(`Failed to get store for teammate ${teammateId}:`, error);
-          }
+      stores['self'] = useTarkovStore() as Store<string, UserState>;
+
+      for (const teammate of Object.keys(teammateStores.value)) {
+        if (teammateStores.value[teammate]) {
+          stores[teammate] = teammateStores.value[teammate];
         }
       }
+
       return stores;
-    },
-    visibleTeamStores(_state: ProgressState): TeamStoresMap {
-      const userStore = useUserStore();
+    });
+    const visibleTeamStores = computed(() => {
       const visibleStores: TeamStoresMap = {};
-      Object.entries(this.teamStores).forEach(([teamId, store]) => {
-        if (teamId === 'self' || !userStore.teamIsHidden(teamId)) {
+      Object.entries(teamStores.value).forEach(([teamId, store]) => {
+        if (!userStore.teamIsHidden(teamId)) {
           visibleStores[teamId] = store;
         }
       });
       return visibleStores;
-    },
-    tasksCompletions(_state: ProgressState): CompletionsMap {
+    });
+    const tasksCompletions = computed(() => {
       const completions: CompletionsMap = {};
-      if (!tasks.value || !this.visibleTeamStores) return {};
+      if (!tasks.value || !visibleTeamStores.value) return {};
       for (const task of tasks.value as Task[]) {
         completions[task.id] = {};
-        for (const teamId of Object.keys(this.visibleTeamStores)) {
-          const store = this.visibleTeamStores[teamId];
+        for (const teamId of Object.keys(visibleTeamStores.value)) {
+          const store = visibleTeamStores.value[teamId];
           completions[task.id][teamId] =
             store?.$state.taskCompletions?.[task.id]?.complete ?? false;
         }
       }
       return completions;
-    },
-    gameEditionData: () => gameEditions,
-    traderLevelsAchieved(_state: ProgressState): TraderLevelsMap {
+    });
+    const gameEditionData = computed(() => gameEditions);
+    const traderLevelsAchieved = computed(() => {
       const levels: TraderLevelsMap = {};
-      if (!traders.value || !this.visibleTeamStores) return {};
-      for (const teamId of Object.keys(this.visibleTeamStores)) {
+      if (!traders.value || !visibleTeamStores.value) return {};
+      for (const teamId of Object.keys(visibleTeamStores.value)) {
         levels[teamId] = {};
-        const store = this.visibleTeamStores[teamId];
+        const store = visibleTeamStores.value[teamId];
         for (const trader of traders.value) {
-          // TODO: Verify how trader level should be determined.
-          // Using player level as a placeholder proxy for now as getTraderLevel is missing.
           levels[teamId][trader.id] = store?.$state.level ?? 0;
         }
       }
       return levels;
-    },
-    playerFaction(_state: ProgressState): FactionMap {
+    });
+    const playerFaction = computed(() => {
       const faction: FactionMap = {};
-      if (!this.visibleTeamStores) return {};
-      for (const teamId of Object.keys(this.visibleTeamStores)) {
-        const store = this.visibleTeamStores[teamId];
+      if (!visibleTeamStores.value) return {};
+      for (const teamId of Object.keys(visibleTeamStores.value)) {
+        const store = visibleTeamStores.value[teamId];
         faction[teamId] = store?.$state.pmcFaction ?? 'Unknown';
       }
       return faction;
-    },
-    unlockedTasks(
-      this: ProgressState & ProgressGetters,
-      _state: ProgressState
-    ): TaskAvailabilityMap {
+    });
+    const unlockedTasks = computed(() => {
       const available: TaskAvailabilityMap = {};
-      if (!tasks.value || !this.visibleTeamStores) return {};
+      if (!tasks.value || !visibleTeamStores.value) return {};
       for (const task of tasks.value as Task[]) {
         available[task.id] = {};
-        for (const teamId of Object.keys(this.visibleTeamStores)) {
-          const store = this.visibleTeamStores[teamId];
+        for (const teamId of Object.keys(visibleTeamStores.value)) {
+          const store = visibleTeamStores.value[teamId];
           const playerLevel = store?.$state.level ?? 0;
-          const playerFaction = this.playerFaction[teamId];
-          const isTaskComplete = this.tasksCompletions[task.id]?.[teamId] ?? false;
+          const currentPlayerFaction = playerFaction.value[teamId];
+          const isTaskComplete = tasksCompletions.value[task.id]?.[teamId] ?? false;
           if (isTaskComplete) {
             available[task.id][teamId] = false;
             continue;
@@ -154,7 +151,7 @@ export const useProgressStore = defineStore('progress', {
           let traderLevelsMet = true;
           if (task.traderLevelRequirements) {
             for (const req of task.traderLevelRequirements) {
-              const currentTraderLevel = this.traderLevelsAchieved[teamId]?.[req.trader.id] ?? 0;
+              const currentTraderLevel = traderLevelsAchieved.value[teamId]?.[req.trader.id] ?? 0;
               if (currentTraderLevel < req.level) {
                 traderLevelsMet = false;
                 break;
@@ -168,7 +165,7 @@ export const useProgressStore = defineStore('progress', {
           let prereqsMet = true;
           if (task.taskRequirements) {
             for (const req of task.taskRequirements) {
-              const isPrereqComplete = this.tasksCompletions[req.task.id]?.[teamId] ?? false;
+              const isPrereqComplete = tasksCompletions.value[req.task.id]?.[teamId] ?? false;
               if (!isPrereqComplete) {
                 prereqsMet = false;
                 break;
@@ -182,7 +179,7 @@ export const useProgressStore = defineStore('progress', {
           if (
             task.factionName &&
             task.factionName !== 'Any' &&
-            task.factionName !== playerFaction
+            task.factionName !== currentPlayerFaction
           ) {
             available[task.id][teamId] = false;
             continue;
@@ -191,28 +188,28 @@ export const useProgressStore = defineStore('progress', {
         }
       }
       return available;
-    },
-    objectiveCompletions(_state: ProgressState): ObjectiveCompletionsMap {
+    });
+    const objectiveCompletions = computed(() => {
       const completions: ObjectiveCompletionsMap = {};
-      if (!objectives.value || !this.visibleTeamStores) return {};
+      if (!objectives.value || !visibleTeamStores.value) return {};
       for (const objective of objectives.value) {
         completions[objective.id] = {};
-        for (const teamId of Object.keys(this.visibleTeamStores)) {
-          const store = this.visibleTeamStores[teamId];
+        for (const teamId of Object.keys(visibleTeamStores.value)) {
+          const store = visibleTeamStores.value[teamId];
           completions[objective.id][teamId] =
             store?.$state.taskObjectives?.[objective.id]?.complete ?? false;
         }
       }
       return completions;
-    },
-    hideoutLevels(_state: ProgressState): HideoutLevelMap {
+    });
+    const hideoutLevels = computed(() => {
       const levels: HideoutLevelMap = {};
-      if (!hideoutStations.value || !this.visibleTeamStores) return {};
+      if (!hideoutStations.value || !visibleTeamStores.value) return {};
       for (const station of hideoutStations.value) {
         if (!station || !station.id) continue;
         levels[station.id] = {};
-        for (const teamId of Object.keys(this.visibleTeamStores)) {
-          const store = this.visibleTeamStores[teamId];
+        for (const teamId of Object.keys(visibleTeamStores.value)) {
+          const store = visibleTeamStores.value[teamId];
           const modulesState = store?.$state.hideoutModules ?? {};
           let maxManuallyCompletedLevel = 0;
           if (station.levels && Array.isArray(station.levels)) {
@@ -230,12 +227,11 @@ export const useProgressStore = defineStore('progress', {
           let currentStationDisplayLevel;
           if (station.id === STASH_STATION_ID) {
             const gameEditionVersion = store?.$state.gameEdition ?? 0;
-            const edition = this.gameEditionData.find(
+            const edition = gameEditionData.value.find(
               (e: GameEdition) => e.version === gameEditionVersion
             );
             const defaultStashFromEdition = edition?.defaultStashLevel ?? 0;
             const maxLevel = station.levels?.length || 0;
-            // Set to min(defaultStashFromEdition, maxLevel)
             const effectiveStashLevel = Math.min(defaultStashFromEdition, maxLevel);
             if (effectiveStashLevel === maxLevel) {
               currentStationDisplayLevel = maxLevel;
@@ -244,7 +240,6 @@ export const useProgressStore = defineStore('progress', {
             }
           } else if (station.id === CULTIST_CIRCLE_STATION_ID) {
             const gameEditionVersion = store?.$state.gameEdition ?? 0;
-            // If Unheard Edition (5) or Unheard+EOD Edition (6), always max this station
             if (
               (gameEditionVersion === 5 || gameEditionVersion === 6) &&
               station.levels &&
@@ -261,56 +256,111 @@ export const useProgressStore = defineStore('progress', {
         }
       }
       return levels;
-    },
-    getTeamIndex(_state: ProgressState) {
-      return (teamId: string): number => {
-        if (!this.visibleTeamStores) return 0;
-        const index = Object.keys(this.visibleTeamStores).indexOf(teamId);
-        return index > -1 ? index : 0;
-      };
-    },
-    getDisplayName(_state: ProgressState) {
-      return (teamId: string): string => {
-        if (teamId === fireuser.uid || teamId === 'self') {
-          const selfStore = this.teamStores['self'];
-          const storedDisplayName = selfStore?.$state.displayName;
-          if (storedDisplayName) {
-            return storedDisplayName;
-          } else {
-            // If the stored display name is null (e.g., after being cleared),
-            // fall back to a shortened UID, then the full teamId (UID or 'self') as a last resort.
-            // This ensures the card shows a UID-based name when cleared, not fireuser.displayName.
-            return fireuser.uid?.substring(0, 6) ?? teamId;
-          }
+    });
+    const getTeamIndex = (teamId: string): string => {
+      return teamId === fireuser?.uid ? 'self' : teamId;
+    };
+    const getDisplayName = (teamId: string): string => {
+      const storeKey = getTeamIndex(teamId);
+      const store = teamStores.value[storeKey];
+      const displayNameFromStore = store?.$state?.displayName;
+
+      if (!displayNameFromStore) {
+        return teamId.substring(0, 6);
+      }
+      return displayNameFromStore;
+    };
+    const getLevel = (teamId: string): number => {
+      const storeKey = getTeamIndex(teamId);
+      const store = teamStores.value[storeKey];
+      return store?.$state?.level ?? 1;
+    };
+    const getFaction = (teamId: string): string => {
+      const store = visibleTeamStores.value[teamId];
+      return store?.$state.pmcFaction ?? 'Unknown';
+    };
+    const getTeammateStore = (teamId: string): Store<string, UserState> | null => {
+      return teammateStores.value[teamId] || null;
+    };
+
+    const hasCompletedTask = (teamId: string, taskId: string): boolean => {
+      const storeKey = getTeamIndex(teamId);
+      const store = teamStores.value[storeKey];
+      const taskCompletion = store?.$state?.taskCompletions?.[taskId];
+      return taskCompletion?.complete === true;
+    };
+
+    const getTaskStatus = (
+      teamId: string,
+      taskId: string
+    ): 'completed' | 'failed' | 'incomplete' => {
+      const storeKey = getTeamIndex(teamId);
+      const store = teamStores.value[storeKey];
+      const taskCompletion = store?.$state?.taskCompletions?.[taskId];
+
+      if (taskCompletion?.complete) return 'completed';
+      if (taskCompletion?.failed) return 'failed';
+      return 'incomplete';
+    };
+
+    const getProgressPercentage = (teamId: string, category: string): number => {
+      const storeKey = getTeamIndex(teamId);
+      const store = teamStores.value[storeKey];
+
+      if (!store?.$state) return 0;
+
+      const state = store.$state;
+
+      switch (category) {
+        case 'tasks': {
+          const totalTasks = Object.keys(state.taskCompletions || {}).length;
+          const completedTasks = Object.values(state.taskCompletions || {}).filter(
+            (completion) => completion?.complete === true
+          ).length;
+          return totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
         }
-        const store = this.teamStores[teamId];
-        return store?.$state.displayName ?? teamId.substring(0, 6) ?? teamId;
-      };
-    },
-    getLevel(_state: ProgressState) {
-      return (teamId: string): number => {
-        if (teamId === fireuser.uid || teamId === 'self') {
-          const selfStore = this.teamStores['self'];
-          return selfStore?.$state.level ?? 1;
+
+        case 'hideout': {
+          const totalModules = Object.keys(state.hideoutModules || {}).length;
+          const completedModules = Object.values(state.hideoutModules || {}).filter(
+            (module) => module?.complete === true
+          ).length;
+          return totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
         }
-        const store = this.visibleTeamStores[teamId];
-        return store?.$state.level ?? 1;
-      };
-    },
-    getFaction(_state: ProgressState) {
-      return (teamId: string): string => {
-        const store = this.visibleTeamStores[teamId];
-        return store?.$state.pmcFaction ?? 'Unknown';
-      };
-    },
+
+        default:
+          return 0;
+      }
+    };
+
+    return {
+      teamStores,
+      visibleTeamStores,
+      tasksCompletions,
+      gameEditionData,
+      traderLevelsAchieved,
+      playerFaction,
+      unlockedTasks,
+      objectiveCompletions,
+      hideoutLevels,
+      getTeamIndex,
+      getDisplayName,
+      getLevel,
+      getFaction,
+      getTeammateStore,
+      hasCompletedTask,
+      getTaskStatus,
+      getProgressPercentage,
+    };
   },
-  actions: {},
-  fireswap: [
-    {
-      path: '.',
-      document: 'userProgress/{uid}',
-      debouncems: 500,
-      localKey: 'userProgress',
-    },
-  ] as FireswapConfig[],
-});
+  {
+    fireswap: [
+      {
+        path: '.',
+        document: 'userProgress/{uid}',
+        debouncems: 500,
+        localKey: 'userProgress',
+      },
+    ] as FireswapConfig[],
+  }
+);

@@ -1,14 +1,11 @@
 // Re-export the new modular composables for backward compatibility
-export { useSystemStoreWithFirebase as useSystemStore } from '@/composables/stores/useSystemStore';
-export {
-  useTeamStoreWithFirebase as useTeamStore,
-  useTeammateStores,
-} from '@/composables/stores/useTeamStore';
-export { useProgressStore } from '@/composables/stores/useProgressStore';
-import { useTeammateStores } from '@/composables/stores/useTeamStore';
-import { useSystemStoreWithFirebase } from '@/composables/stores/useSystemStore';
-import { useTeamStoreWithFirebase } from '@/composables/stores/useTeamStore';
-import { useProgressStore } from '@/composables/stores/useProgressStore';
+export { useSystemStoreWithFirebase as useSystemStore } from '@/stores/useSystemStore';
+export { useTeamStoreWithFirebase as useTeamStore, useTeammateStores } from '@/stores/useTeamStore';
+export { useProgressStore } from '@/stores/progress';
+import { useTeammateStores } from '@/stores/useTeamStore';
+import { useSystemStoreWithFirebase } from '@/stores/useSystemStore';
+import { useTeamStoreWithFirebase } from '@/stores/useTeamStore';
+import { useProgressStore } from '@/stores/progress';
 // Legacy support - the actual implementation is now in the modular composables
 // This maintains backward compatibility while using the new structure
 // Moved to @/composables/utils/storeHelpers.ts as clearStaleState

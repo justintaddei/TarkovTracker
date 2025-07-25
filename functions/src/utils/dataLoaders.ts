@@ -2,8 +2,7 @@ import functions from 'firebase-functions';
 import admin from 'firebase-admin';
 import { Firestore, DocumentReference, DocumentSnapshot } from 'firebase-admin/firestore';
 
-// Define interfaces for the expected data structures
-// TODO: Refine these interfaces based on the actual structure of your Firestore documents
+// Define interfaces for Firestore document data structures
 interface TaskData {
   [taskId: string]: unknown;
 }
@@ -17,7 +16,6 @@ let cachedHideoutData: HideoutData | null | undefined = undefined;
 // Generic Firestore document loader with in-memory caching
 async function loadAndCache<T>(
   cache: T | null | undefined,
-  // eslint-disable-next-line no-unused-vars
   setCache: (unusedData: T | null) => void,
   collection: string,
   doc: string,

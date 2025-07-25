@@ -206,10 +206,7 @@ export function useTaskData() {
       if (newResult?.tasks) {
         const newGraph = buildTaskGraph(newResult.tasks);
         const processedData = processTaskData(newResult.tasks);
-        const enhancedTasks = enhanceTasksWithRelationships(
-          newResult.tasks,
-          newGraph
-        );
+        const enhancedTasks = enhanceTasksWithRelationships(newResult.tasks, newGraph);
 
         // Update reactive state
         tasks.value = enhancedTasks;

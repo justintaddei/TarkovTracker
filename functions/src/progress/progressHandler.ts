@@ -1,11 +1,7 @@
 import functions from 'firebase-functions';
 import admin from 'firebase-admin';
 import { Request, Response } from 'express';
-import {
-  Firestore,
-  DocumentReference,
-  DocumentSnapshot,
-} from 'firebase-admin/firestore';
+import { Firestore, DocumentReference, DocumentSnapshot } from 'firebase-admin/firestore';
 
 // Import from TypeScript files with .js extension for module resolution
 import { getTaskData, getHideoutData } from '../utils/dataLoaders.js';
@@ -461,8 +457,7 @@ const updateSingleTask = async (req: AuthenticatedRequest, res: Response): Promi
         updateData[`taskCompletions.${taskId}.complete`] = false;
         updateData[`taskCompletions.${taskId}.failed`] = false;
         // Use FieldValue.delete() for timestamp removal
-        updateData[`taskCompletions.${taskId}.timestamp`] =
-          admin.firestore.FieldValue.delete();
+        updateData[`taskCompletions.${taskId}.timestamp`] = admin.firestore.FieldValue.delete();
       }
 
       await progressRef.update(updateData);

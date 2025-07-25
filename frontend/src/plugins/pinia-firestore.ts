@@ -8,8 +8,7 @@ import {
   type DocumentData,
   type Firestore,
 } from 'firebase/firestore';
-import { debounce, set, get } from 'lodash-es';
-import type { DebouncedFunc } from 'lodash-es';
+import { debounce, set, get } from '@/utils/debounce';
 import type { PiniaPluginContext, Store, StateTree, SubscriptionCallbackMutation } from 'pinia';
 import type { StateTree as PiniaStateTree } from 'pinia';
 const db: Firestore = firestore;
@@ -24,7 +23,7 @@ interface FireswapSettingInternal {
   lock?: boolean;
   unsubscribe?: Unsubscribe;
   loadLocal?: () => void;
-  uploadDocument?: DebouncedFunc<(state: StateTree) => void>;
+  uploadDocument?: ((state: StateTree) => void) & { cancel: () => void };
 }
 // Extend Pinia's options type to include our custom 'fireswap' option
 declare module 'pinia' {

@@ -39,22 +39,20 @@ markI18nReady();
 
 // Initialize Pinia first
 app.use(pinia);
-// Delay to ensure Pinia is fully initialized
-setTimeout(() => {
-  // Force initialize the store system as a failsafe
-  forceInitialize();
 
-  // Continue with the rest of the initialization
-  app
-    .use(router)
-    .use(vuetify)
-    .use(VueFire, {
-      firebaseApp: fireapp,
-      modules: [],
-    })
-    .provide(DefaultApolloClient, apolloClient)
-    .mount('#app');
-  
-  // Ensure the store system is marked as initialized
-  markInitialized();
-}, 100);
+// Force initialize the store system as a failsafe
+forceInitialize();
+
+// Continue with the rest of the initialization
+app
+  .use(router)
+  .use(vuetify)
+  .use(VueFire, {
+    firebaseApp: fireapp,
+    modules: [],
+  })
+  .provide(DefaultApolloClient, apolloClient)
+  .mount('#app');
+
+// Ensure the store system is marked as initialized
+markInitialized();

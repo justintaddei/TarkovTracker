@@ -219,11 +219,11 @@
   import { useUserStore } from '@/stores/user';
   import { useTarkovStore } from '@/stores/tarkov';
   import { fireuser } from '@/plugins/firebase';
-  import QuestFilter from '@/components/settings/QuestFilter';
-  import FactionSelect from '@/components/settings/FactionSelect';
-  import ApiTokens from '@/components/settings/ApiTokens';
-  import DataMigrationCard from '@/components/settings/DataMigrationCard';
-  import FittedCard from '@/components/ui/FittedCard';
+  import QuestFilter from '@/features/settings/QuestFilter';
+  import FactionSelect from '@/features/settings/FactionSelect';
+  import ApiTokens from '@/features/settings/ApiTokens';
+  import DataMigrationCard from '@/features/settings/DataMigrationCard';
+  import FittedCard from '@/features/ui/FittedCard';
 
   const tarkovStore = useTarkovStore();
   const userStore = useUserStore();

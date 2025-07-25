@@ -139,13 +139,15 @@ export interface TarkovMap {
   id: string;
   name: string;
   normalizedName?: string;
-  svg?: string | {
-    file: string;
-    floors: string[];
-    defaultFloor: string;
-    coordinateRotation: number;
-    bounds: number[][];
-  };
+  svg?:
+    | string
+    | {
+        file: string;
+        floors: string[];
+        defaultFloor: string;
+        coordinateRotation: number;
+        bounds: number[][];
+      };
 }
 
 export interface Trader {

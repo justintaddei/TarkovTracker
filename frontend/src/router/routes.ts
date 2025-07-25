@@ -4,7 +4,7 @@ const routes: RouteRecordRaw[] = [
   {
     // Standard Layout
     path: '/',
-    component: () => import('@/components/layout/StandardLayout.vue'),
+    component: () => import('@/features/layout/StandardLayout.vue'),
     children: [
       {
         // Default route

@@ -93,7 +93,7 @@ const formatObjective = (
 
   for (const [objectiveKey, objectiveValue] of Object.entries(objectiveData)) {
     let isComplete = false;
-    let isFailed = objectiveValue?.failed ?? false; // Default based on an explicit 'failed' field
+    const isFailed = objectiveValue?.failed ?? false; // Default based on an explicit 'failed' field
 
     // Use the 'complete' boolean field (legacy format)
     if (typeof objectiveValue?.complete === 'boolean') {
@@ -141,7 +141,7 @@ const invalidateTaskRecursive = (
     // Child only means we only mark the successors as invalid, not the task itself, this is used for alternative tasks
     if (!childOnly) {
       // Find the index of the task in the tasksProgress
-      let taskIndex = tasksProgress.findIndex((t) => t.id === taskId);
+      const taskIndex = tasksProgress.findIndex((t) => t.id === taskId);
       // Mark the task as invalid
       if (taskIndex !== -1) {
         tasksProgress[taskIndex].invalid = true;
@@ -151,7 +151,7 @@ const invalidateTaskRecursive = (
       }
       // For each objective of the task, mark it as invalid
       task.objectives?.forEach((objective) => {
-        let objectiveIndex = objectiveProgress.findIndex((o) => o.id === objective.id);
+        const objectiveIndex = objectiveProgress.findIndex((o) => o.id === objective.id);
         if (objectiveIndex !== -1) {
           objectiveProgress[objectiveIndex].invalid = true;
           objectiveProgress[objectiveIndex].complete = false; // Ensure invalid objectives are not complete
@@ -208,7 +208,9 @@ const _processHideoutStations = (
   if (!hideoutData?.hideoutStations) return;
   const updateStationLevelForProgress = (level: HideoutLevel, progress: FormattedProgress) => {
     // Mark module complete
-    let moduleIndex = progress.hideoutModulesProgress.findIndex((mLevel) => mLevel.id === level.id);
+    const moduleIndex = progress.hideoutModulesProgress.findIndex(
+      (mLevel) => mLevel.id === level.id
+    );
     if (moduleIndex === -1) {
       progress.hideoutModulesProgress.push({
         id: level.id,
@@ -219,7 +221,7 @@ const _processHideoutStations = (
     }
     // Mark parts complete
     level.itemRequirements?.forEach((item) => {
-      let partIndex = progress.hideoutPartsProgress.findIndex((part) => part.id === item.id);
+      const partIndex = progress.hideoutPartsProgress.findIndex((part) => part.id === item.id);
       if (partIndex === -1) {
         progress.hideoutPartsProgress.push({
           id: item.id,

@@ -1,7 +1,11 @@
 import admin from 'firebase-admin';
 import { logger } from 'firebase-functions/v2';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { HttpsError, CallableRequest, Request as FirebaseRequest } from 'firebase-functions/v2/https';
+import {
+  HttpsError,
+  CallableRequest,
+  Request as FirebaseRequest,
+} from 'firebase-functions/v2/https';
 import { DecodedIdToken } from 'firebase-admin/auth';
 import { request, gql } from 'graphql-request';
 import UIDGenerator from 'uid-generator';
@@ -46,7 +50,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   logger.log(`API Request: ${req.method} ${req.originalUrl}`);
   next();
 });
-app.use(cors({ origin: true }));
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+    optionsSuccessStatus: 200,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  })
+);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -62,6 +74,11 @@ type AuthenticatedHandler = (_req: AuthenticatedRequest, _res: Response) => void
 app.get('/api/token', tokenHandler.getTokenInfo as AuthenticatedHandler);
 app.get('/api/progress', progressHandler.getPlayerProgress as AuthenticatedHandler);
 app.get('/api/team/progress', progressHandler.getTeamProgress as AuthenticatedHandler);
+// Add OPTIONS handler for CORS preflight
+app.options('/api/team/create', (req: Request, res: Response) => {
+  res.status(200).send();
+});
+
 app.post('/api/team/create', async (req: AuthenticatedRequest, res: Response) => {
   try {
     if (!req.user) {
@@ -92,6 +109,43 @@ app.post('/api/team/create', async (req: AuthenticatedRequest, res: Response) =>
     }
   }
 });
+
+// Add OPTIONS handler for leave team CORS preflight
+app.options('/api/team/leave', (req: Request, res: Response) => {
+  res.status(200).send();
+});
+
+app.post('/api/team/leave', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    // Create a mock callable request
+    const callableRequest: CallableRequest<void> = {
+      auth: {
+        uid: req.user.id,
+        token: req.user as unknown as DecodedIdToken,
+      },
+      data: req.body,
+      rawRequest: req as unknown as FirebaseRequest,
+      acceptsStreaming: false,
+    };
+
+    // Call the existing logic
+    const result = await _leaveTeamLogic(callableRequest);
+    res.status(200).json(result);
+  } catch (error) {
+    logger.error('Error in /api/team/leave:', error);
+    if (error instanceof HttpsError) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
 app.post('/api/progress/level/:levelValue', progressHandler.setPlayerLevel as AuthenticatedHandler);
 app.post('/api/progress/task/:taskId', progressHandler.updateSingleTask as AuthenticatedHandler);
 app.post('/api/progress/tasks', progressHandler.updateMultipleTasks as AuthenticatedHandler);

@@ -1,5 +1,6 @@
 import { firestore } from '@/plugins/firebase';
-import { doc, getDoc, setDoc, DocumentData } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from '@/plugins/firebase';
+import type { DocumentData } from 'firebase/firestore';
 
 // Define a basic interface for the progress data structure
 export interface ProgressData {
@@ -275,7 +276,6 @@ export default class DataMigrationService {
       try {
         const progressRef = doc(firestore, 'progress', uid);
         await setDoc(progressRef, importedData as DocumentData, { merge: false });
-        console.log(`[DataMigrationService] Data successfully imported for user ${uid}`);
         // Also update local storage to reflect the imported data
         localStorage.setItem(LOCAL_PROGRESS_KEY, JSON.stringify(importedData));
         return true;

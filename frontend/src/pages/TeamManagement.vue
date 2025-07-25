@@ -24,11 +24,11 @@
   import { useLiveData } from '@/composables/livedata';
   import { useRoute } from 'vue-router';
   import { defineAsyncComponent } from 'vue';
-  const TeamMembers = defineAsyncComponent(() => import('@/components/teams/TeamMembers'));
-  const TeamOptions = defineAsyncComponent(() => import('@/components/teams/TeamOptions'));
-  const MyTeam = defineAsyncComponent(() => import('@/components/teams/MyTeam'));
-  const TrackerTip = defineAsyncComponent(() => import('@/components/ui/TrackerTip'));
-  const TeamInvite = defineAsyncComponent(() => import('@/components/teams/TeamInvite'));
+  const TeamMembers = defineAsyncComponent(() => import('@/features/team/TeamMembers'));
+  const TeamOptions = defineAsyncComponent(() => import('@/features/team/TeamOptions'));
+  const MyTeam = defineAsyncComponent(() => import('@/features/team/MyTeam'));
+  const TrackerTip = defineAsyncComponent(() => import('@/features/ui/TrackerTip'));
+  const TeamInvite = defineAsyncComponent(() => import('@/features/team/TeamInvite'));
   const { useSystemStore } = useLiveData();
   const { systemStore } = useSystemStore();
   const route = useRoute();

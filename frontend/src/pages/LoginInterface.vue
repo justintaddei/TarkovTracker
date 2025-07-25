@@ -38,8 +38,8 @@
   import { fireuser } from '@/plugins/firebase.ts';
   // Track if the migration dialog is currently being shown
   const showingMigrationDialog = ref(false);
-  const TrackerTip = defineAsyncComponent(() => import('@/components/ui/TrackerTip'));
-  const AuthButtons = defineAsyncComponent(() => import('@/components/auth/AuthButtons'));
+  const TrackerTip = defineAsyncComponent(() => import('@/features/ui/TrackerTip'));
+  const AuthButtons = defineAsyncComponent(() => import('@/features/auth/AuthButtons'));
 </script>
 <style scoped>
   .login-page {

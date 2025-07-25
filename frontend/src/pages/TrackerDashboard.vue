@@ -114,7 +114,7 @@
   import { computed, defineAsyncComponent } from 'vue';
   import { useI18n } from 'vue-i18n';
   const { t } = useI18n({ useScope: 'global' });
-  const TrackerStat = defineAsyncComponent(() => import('@/components/dashboard/TrackerStat'));
+  const TrackerStat = defineAsyncComponent(() => import('@/features/dashboard/TrackerStat'));
   const { tasks, objectives } = useTarkovData();
   const progressStore = useProgressStore();
   const tarkovStore = useTarkovStore();
@@ -343,77 +343,77 @@
   const lastUpdated = computed(() => {
     const buildTime = import.meta.env.VITE_BUILD_TIME;
     if (!buildTime) return 'Unknown';
-    
+
     const date = new Date(buildTime);
     return date.toLocaleString();
   });
 </script>
 <style lang="scss" scoped>
-.stats-row {
-  margin: 0 -8px; // Offset the column padding
-}
-
-.stats-col {
-  padding: 8px;
-  
-  // Remove the flex and height constraints that are making cards too tall
-  :deep(.v-sheet) {
-    height: auto;
-    min-height: auto;
-  }
-}
-
-// Better responsive behavior
-@media (max-width: 600px) {
-  .stats-col {
-    padding: 4px;
-    margin-bottom: 8px;
-  }
-}
-
-@media (min-width: 600px) and (max-width: 960px) {
-  .stats-col {
-    &:nth-child(odd) {
-      padding-right: 4px;
-    }
-    &:nth-child(even) {
-      padding-left: 4px;
-    }
-  }
-}
-
-@media (min-width: 1280px) {
   .stats-row {
-    max-width: 1200px;
-    margin: 0 auto;
+    margin: 0 -8px; // Offset the column padding
   }
-}
 
-.project-status-alert {
-  :deep(.v-alert__content) {
-    padding: 8px 0;
-  }
-  
-  :deep(.v-alert-title) {
-    font-size: 1rem;
-    margin-bottom: 4px;
-  }
-}
+  .stats-col {
+    padding: 8px;
 
-// Make it even more compact on mobile
-@media (max-width: 600px) {
+    // Remove the flex and height constraints that are making cards too tall
+    :deep(.v-sheet) {
+      height: auto;
+      min-height: auto;
+    }
+  }
+
+  // Better responsive behavior
+  @media (max-width: 600px) {
+    .stats-col {
+      padding: 4px;
+      margin-bottom: 8px;
+    }
+  }
+
+  @media (min-width: 600px) and (max-width: 960px) {
+    .stats-col {
+      &:nth-child(odd) {
+        padding-right: 4px;
+      }
+      &:nth-child(even) {
+        padding-left: 4px;
+      }
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .stats-row {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+  }
+
   .project-status-alert {
     :deep(.v-alert__content) {
-      padding: 6px 0;
+      padding: 8px 0;
     }
-    
-    .text-body-2 {
-      font-size: 0.8rem;
-    }
-    
-    .d-flex {
-      font-size: 0.75rem !important;
+
+    :deep(.v-alert-title) {
+      font-size: 1rem;
+      margin-bottom: 4px;
     }
   }
-}
+
+  // Make it even more compact on mobile
+  @media (max-width: 600px) {
+    .project-status-alert {
+      :deep(.v-alert__content) {
+        padding: 6px 0;
+      }
+
+      .text-body-2 {
+        font-size: 0.8rem;
+      }
+
+      .d-flex {
+        font-size: 0.75rem !important;
+      }
+    }
+  }
 </style>

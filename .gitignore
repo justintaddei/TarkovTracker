@@ -5,6 +5,7 @@ logs/
 /.firebase/
 /.firebase-emulator-savedata/
 /firebase-export-*
+/.firebaserc
 
 # local env files
 .env
@@ -50,6 +51,14 @@ dev-debug.log
 *.sln
 *.sw?
 # OS specific
+
+# Debug and build files
+*-debug.log
+*.log
+database-debug.log
+firebase-debug.log
+firestore-debug.log
+pubsub-debug.log
 
 # Task files
 # tasks.json

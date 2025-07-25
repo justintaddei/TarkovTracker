@@ -156,12 +156,12 @@
   import { useTarkovData } from '@/composables/tarkovdata';
   import { useProgressStore, STASH_STATION_ID } from '@/stores/progress';
   import { defineAsyncComponent } from 'vue';
-  import { debounce } from 'lodash-es';
+  import { debounce } from '@/utils/debounce';
   import { useI18n } from 'vue-i18n';
   import { useUserStore } from '@/stores/user';
-  const TrackerTip = defineAsyncComponent(() => import('@/components/ui/TrackerTip'));
-  const RefreshButton = defineAsyncComponent(() => import('@/components/ui/RefreshButton'));
-  const NeededItem = defineAsyncComponent(() => import('@/components/neededitems/NeededItem'));
+  const TrackerTip = defineAsyncComponent(() => import('@/features/ui/TrackerTip'));
+  const RefreshButton = defineAsyncComponent(() => import('@/features/ui/RefreshButton'));
+  const NeededItem = defineAsyncComponent(() => import('@/features/neededitems/NeededItem'));
   const { t } = useI18n({ useScope: 'global' });
   const {
     tasks,
