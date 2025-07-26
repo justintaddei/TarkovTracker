@@ -211,6 +211,700 @@ window.openapi = {
     }
   ],
   "paths": {
+    "/api/progress": {
+      "get": {
+        "summary": "Returns progress data of the player",
+        "tags": [
+          "Progress"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Player progress retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Progress"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "self": {
+                          "type": "string",
+                          "description": "The user ID of the requester."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Invalid token or missing 'GP' permission."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/api/progress/level/{levelValue}": {
+      "post": {
+        "summary": "Sets player's level to value specified in the path",
+        "tags": [
+          "Progress"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "levelValue",
+            "in": "path",
+            "description": "Player's new level",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 79
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Player's level was updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "level": {
+                          "type": "integer"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid level value provided."
+          },
+          "401": {
+            "description": "Unauthorized. Invalid token or missing 'WP' permission."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/api/progress/task/{taskId}": {
+      "post": {
+        "summary": "Update the progress state of a single task.",
+        "tags": [
+          "Progress"
+        ],
+        "description": "Update the progress state of a single task.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "description": "The ID (usually UUID from tarkov.dev) of the task to update.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "The new state for the task.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "state"
+                ],
+                "properties": {
+                  "state": {
+                    "type": "string",
+                    "description": "The new state of the task.",
+                    "enum": [
+                      "uncompleted",
+                      "completed",
+                      "failed"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The task was updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "taskId": {
+                          "type": "string"
+                        },
+                        "state": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters (e.g., bad taskId or state)."
+          },
+          "401": {
+            "description": "Unauthorized to update progress (missing 'WP' permission)."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/api/progress/tasks": {
+      "post": {
+        "summary": "Updates status for multiple tasks",
+        "tags": [
+          "Progress"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Object where keys are task IDs and values are the new status",
+                "additionalProperties": {
+                  "type": "string",
+                  "enum": [
+                    "uncompleted",
+                    "completed",
+                    "failed"
+                  ]
+                },
+                "example": {
+                  "task1": "completed",
+                  "task5": "uncompleted"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tasks updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "updatedTasks": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body format or invalid status values."
+          },
+          "401": {
+            "description": "Unauthorized. Invalid token or missing 'WP' permission."
+          },
+          "500": {
+            "description": "Internal server error during batch update."
+          }
+        }
+      }
+    },
+    "/api/progress/task/objective/{objectiveId}": {
+      "post": {
+        "summary": "Update objective progress for a task.",
+        "tags": [
+          "Progress"
+        ],
+        "description": "Update the progress (state or count) for a specific task objective.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "objectiveId",
+            "required": true,
+            "description": "The ID (usually UUID from tarkov.dev) of the task objective to update.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "The objective properties to update. Provide at least one.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "type": "string",
+                    "description": "The new state of the task objective.",
+                    "enum": [
+                      "completed",
+                      "uncompleted"
+                    ],
+                    "nullable": true
+                  },
+                  "count": {
+                    "type": "integer",
+                    "description": "The number of items or completions toward the objective's goal.",
+                    "minimum": 0,
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The objective was updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "objectiveId": {
+                          "type": "string"
+                        },
+                        "state": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "count": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters (e.g., bad objectiveId, state, or count)."
+          },
+          "401": {
+            "description": "Unauthorized to update progress (missing 'WP' permission)."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/api/team/progress": {
+      "get": {
+        "summary": "Returns progress data of all members of the team",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Team progress retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Progress"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "self": {
+                          "type": "string"
+                        },
+                        "hiddenTeammates": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Invalid token or missing 'TP' permission."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/api/team/create": {
+      "post": {
+        "summary": "Creates a new team",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "description": "Custom password for the team (optional, will be generated if not provided)"
+                  },
+                  "maximumMembers": {
+                    "type": "integer",
+                    "description": "Maximum number of team members (default: 10)",
+                    "minimum": 2,
+                    "maximum": 50
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Team created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "team": {
+                          "type": "string"
+                        },
+                        "password": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters."
+          },
+          "403": {
+            "description": "Must wait before creating a new team after leaving."
+          },
+          "409": {
+            "description": "User is already in a team."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/api/team/join": {
+      "post": {
+        "summary": "Join an existing team",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "password"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Team ID to join"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Team password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully joined team.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "joined": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Team ID and password are required."
+          },
+          "401": {
+            "description": "Incorrect team password."
+          },
+          "403": {
+            "description": "Team is full."
+          },
+          "404": {
+            "description": "Team does not exist."
+          },
+          "409": {
+            "description": "User is already in a team."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/api/team/leave": {
+      "post": {
+        "summary": "Leave current team",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully left team.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "left": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "User is not in a team."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
+    "/api/token": {
+      "get": {
+        "summary": "Returns data associated with the Token given in the Authorization header of the request",
+        "tags": [
+          "Token"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token details retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "permissions": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Permissions associated with the token."
+                        },
+                        "token": {
+                          "type": "string",
+                          "description": "The API token string."
+                        },
+                        "owner": {
+                          "type": "string",
+                          "description": "Token owner ID."
+                        },
+                        "note": {
+                          "type": "string",
+                          "description": "Token description/note."
+                        },
+                        "calls": {
+                          "type": "integer",
+                          "description": "Number of API calls made with this token."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Invalid or missing token."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
     "/progress": {
       "get": {
         "summary": "Returns progress data of the player",
