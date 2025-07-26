@@ -6,7 +6,6 @@ import {
   CallableRequest,
   Request as FirebaseRequest,
 } from 'firebase-functions/v2/https';
-import { DecodedIdToken } from 'firebase-admin/auth';
 import { request, gql } from 'graphql-request';
 import UIDGenerator from 'uid-generator';
 import {
@@ -21,190 +20,134 @@ import cors from 'cors';
 import * as functions from 'firebase-functions';
 import express, { Express, Request, Response, NextFunction } from 'express';
 import bodyParser from 'body-parser';
-import { verifyBearer } from './auth/verifyBearer.js';
-import tokenHandler from './token/tokenHandler.js';
-import progressHandler from './progress/progressHandler.js';
+
+// Import new middleware and handlers
+import { verifyBearer } from './middleware/auth.js';
+import { errorHandler, notFoundHandler, asyncHandler } from './middleware/errorHandler.js';
+import progressHandler from './handlers/progressHandler.js';
+import teamHandler from './handlers/teamHandler.js';
+import tokenHandler from './handlers/tokenHandler.js';
+
+// Import legacy functions for backward compatibility
 import { createToken } from './token/create.js';
 import { revokeToken } from './token/revoke.js';
+
+import { getDeploymentConfig } from './deploy-config.js';
 admin.initializeApp();
 export { createToken, revokeToken };
-interface ApiToken {
-  owner: string;
-  note: string;
-  permissions: string[];
-  calls?: number;
-  createdAt?: admin.firestore.Timestamp;
-  token?: string;
-}
-interface UserContext {
-  id: string;
-  username?: string;
-  roles?: string[];
-}
-interface AuthenticatedRequest extends Request {
-  apiToken?: ApiToken;
-  user?: UserContext;
-}
+// Interfaces used by the application (commented to avoid unused warnings)
+// interface ApiToken {
+//   owner: string;
+//   note: string;
+//   permissions: string[];
+//   calls?: number;
+//   createdAt?: admin.firestore.Timestamp;
+//   token?: string;
+// }
+
+// interface UserContext {
+//   id: string;
+//   username?: string;
+//   roles?: string[];
+// }
+// Get deployment configuration
+const config = getDeploymentConfig();
+
 const app: Express = express();
+
+// Request logging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
-  logger.log(`API Request: ${req.method} ${req.originalUrl}`);
+  const logData = {
+    method: req.method,
+    url: req.originalUrl,
+    userAgent: req.headers['user-agent'],
+    ip: req.ip,
+  };
+  
+  if (config.enableDetailedLogging) {
+    logger.log(`API Request: ${req.method} ${req.originalUrl}`, logData);
+  } else {
+    logger.log(`API Request: ${req.method} ${req.originalUrl}`);
+  }
   next();
 });
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-    optionsSuccessStatus: 200,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  })
-);
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 
-// Define a reusable type for Express middleware without causing linting errors
-// This is a proper type for middleware that is passed to app.use()
-type ExpressMiddleware = (_req: Request, _res: Response, _next: NextFunction) => void;
+// CORS configuration
+app.use(cors({
+  origin: true,
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
 
-// Then use this type instead of inline casting
-app.use(verifyBearer as ExpressMiddleware);
+// Parse request bodies
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-// Define a type for handlers with only the parameters they use
-type AuthenticatedHandler = (_req: AuthenticatedRequest, _res: Response) => void | Promise<void>;
-app.get('/api/token', tokenHandler.getTokenInfo as AuthenticatedHandler);
-app.get('/api/progress', progressHandler.getPlayerProgress as AuthenticatedHandler);
-app.get('/api/team/progress', progressHandler.getTeamProgress as AuthenticatedHandler);
-// Add OPTIONS handler for CORS preflight
+// Apply new authentication middleware to API routes
+app.use('/api', verifyBearer);
+
+// ===== NEW API ROUTES (IMPROVED) =====
+app.get('/api/token', tokenHandler.getTokenInfo);
+app.get('/api/progress', progressHandler.getPlayerProgress);
+app.get('/api/team/progress', teamHandler.getTeamProgress);
+// Progress routes
+app.post('/api/progress/level/:levelValue', progressHandler.setPlayerLevel);
+app.post('/api/progress/task/:taskId', progressHandler.updateSingleTask);
+app.post('/api/progress/tasks', progressHandler.updateMultipleTasks);
+app.post('/api/progress/task/objective/:objectiveId', progressHandler.updateTaskObjective);
+
+// Team routes with CORS options
 app.options('/api/team/create', (req: Request, res: Response) => {
   res.status(200).send();
 });
+app.post('/api/team/create', teamHandler.createTeam);
 
-app.post('/api/team/create', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    if (!req.user) {
-      res.status(401).json({ error: 'Authentication required' });
-      return;
-    }
-
-    // Create a mock callable request
-    const callableRequest: CallableRequest<CreateTeamData> = {
-      auth: {
-        uid: req.user.id,
-        token: req.user as unknown as DecodedIdToken,
-      },
-      data: req.body,
-      rawRequest: req as unknown as FirebaseRequest,
-      acceptsStreaming: false,
-    };
-
-    // Call the existing logic
-    const result = await _createTeamLogic(callableRequest);
-    res.status(200).json(result);
-  } catch (error) {
-    logger.error('Error in /api/team/create:', error);
-    if (error instanceof HttpsError) {
-      res.status(400).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
+app.options('/api/team/join', (req: Request, res: Response) => {
+  res.status(200).send();
 });
+app.post('/api/team/join', teamHandler.joinTeam);
 
-// Add OPTIONS handler for leave team CORS preflight
 app.options('/api/team/leave', (req: Request, res: Response) => {
   res.status(200).send();
 });
+app.post('/api/team/leave', teamHandler.leaveTeam);
+// ===== BACKWARD COMPATIBILITY ROUTES (v2) =====
+// These ensure old /api/v2/ endpoints still work
+app.get('/api/v2/token', tokenHandler.getTokenInfo);
+app.get('/api/v2/progress', progressHandler.getPlayerProgress);
+app.get('/api/v2/team/progress', teamHandler.getTeamProgress);
+app.post('/api/v2/progress/level/:levelValue', progressHandler.setPlayerLevel);
+app.post('/api/v2/progress/task/:taskId', progressHandler.updateSingleTask);
+app.post('/api/v2/progress/tasks', progressHandler.updateMultipleTasks);
+app.post('/api/v2/progress/task/objective/:objectiveId', progressHandler.updateTaskObjective);
 
-app.post('/api/team/leave', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    if (!req.user) {
-      res.status(401).json({ error: 'Authentication required' });
-      return;
-    }
-
-    // Create a mock callable request
-    const callableRequest: CallableRequest<void> = {
-      auth: {
-        uid: req.user.id,
-        token: req.user as unknown as DecodedIdToken,
+// ===== HEALTH CHECK ROUTE =====
+app.get('/health', asyncHandler(async (req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    data: {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      version: '2.0.0',
+      service: 'tarkovtracker-api',
+      features: {
+        newErrorHandling: config.useNewErrorHandling,
+        newProgressService: config.useNewProgressService,
+        newTeamService: config.useNewTeamService,
+        newTokenService: config.useNewTokenService,
       },
-      data: req.body,
-      rawRequest: req as unknown as FirebaseRequest,
-      acceptsStreaming: false,
-    };
-
-    // Call the existing logic
-    const result = await _leaveTeamLogic(callableRequest);
-    res.status(200).json(result);
-  } catch (error) {
-    logger.error('Error in /api/team/leave:', error);
-    if (error instanceof HttpsError) {
-      res.status(400).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  }
-});
-
-app.post('/api/progress/level/:levelValue', progressHandler.setPlayerLevel as AuthenticatedHandler);
-app.post('/api/progress/task/:taskId', progressHandler.updateSingleTask as AuthenticatedHandler);
-app.post('/api/progress/tasks', progressHandler.updateMultipleTasks as AuthenticatedHandler);
-app.post(
-  '/api/progress/task/objective/:objectiveId',
-  progressHandler.updateTaskObjective as AuthenticatedHandler
-);
-// --- Backward Compatibility Routes for /api/v2 ---
-// These routes ensure that old /api/v2/ endpoints still work by pointing to the same handlers.
-// v2 Token Route
-app.get('/api/v2/token', tokenHandler.getTokenInfo as AuthenticatedHandler);
-// v2 Progress Routes
-app.get('/api/v2/progress', progressHandler.getPlayerProgress as AuthenticatedHandler);
-app.get('/api/v2/team/progress', progressHandler.getTeamProgress as AuthenticatedHandler);
-app.post(
-  '/api/v2/progress/level/:levelValue',
-  progressHandler.setPlayerLevel as AuthenticatedHandler
-);
-app.post('/api/v2/progress/task/:taskId', progressHandler.updateSingleTask as AuthenticatedHandler);
-app.post('/api/v2/progress/tasks', progressHandler.updateMultipleTasks as AuthenticatedHandler);
-app.post(
-  '/api/v2/progress/task/objective/:objectiveId',
-  progressHandler.updateTaskObjective as AuthenticatedHandler
-);
-
-// Define a type for Express error handling middleware to clearly show intent
-type ErrorHandlerMiddleware = (
-  _err: Error,
-  _req: Request,
-  _res: Response,
-  _next: NextFunction
-) => void;
-
-// Use the error handler type to make the intent clear
-app.use(((_err: Error, _req: Request, _res: Response, _next: NextFunction) => {
-  const authReq = _req as AuthenticatedRequest;
-  const errorDetails = {
-    error: _err.message,
-    stack: _err.stack,
-    url: _req.originalUrl,
-    method: _req.method,
-    user: {
-      id: authReq.user?.id,
-      username: authReq.user?.username,
-      roles: authReq.user?.roles,
     },
-    token: {
-      owner: authReq.apiToken?.owner,
-      permissions: authReq.apiToken?.permissions,
-    },
-    headers: _req.headers,
-  };
-  logger.error('Unhandled error in API:', errorDetails);
-  _res.status(500).send({
-    error: 'An internal server error occurred.',
-    isDevelopment: process.env.NODE_ENV === 'development',
-    details: process.env.NODE_ENV === 'development' ? _err.message : undefined,
   });
-}) as ErrorHandlerMiddleware);
+}));
+
+// ===== ERROR HANDLING =====
+// Handle 404 for unmatched routes
+app.use(notFoundHandler);
+
+// Centralized error handler (must be last)
+app.use(errorHandler);
 
 export const api = functions.https.onRequest(app);
 interface SystemDocData {
@@ -219,12 +162,45 @@ interface TeamDocData {
   members?: string[];
   createdAt?: admin.firestore.Timestamp;
 }
-async function _leaveTeamLogic(request: CallableRequest<void>): Promise<{ left: boolean }> {
-  const db: Firestore = admin.firestore();
+
+// Utility functions for common team operations
+function validateAuth(request: CallableRequest<unknown>): string {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Authentication required.');
   }
-  const userUid: string = request.auth.uid;
+  return request.auth.uid;
+}
+
+function handleTeamError(
+  operation: string,
+  error: unknown,
+  context: Record<string, unknown>
+): never {
+  logger.error(`Failed to ${operation}:`, { ...context, error });
+  if (error instanceof HttpsError) {
+    throw error;
+  }
+  const message = error instanceof Error ? error.message : String(error);
+  throw new HttpsError('internal', `Error during ${operation}`, message);
+}
+
+async function generateSecurePassword(): Promise<string> {
+  try {
+    const passGen = new UIDGenerator(48, UIDGenerator.BASE62);
+    const generated = await passGen.generate();
+    if (generated && generated.length >= 4) {
+      return generated;
+    }
+    logger.warn('Generated password was invalid, using fallback');
+    return 'DEBUG_PASS_123';
+  } catch (error) {
+    logger.error('Error during password generation:', error);
+    return 'ERROR_PASS_456';
+  }
+}
+async function _leaveTeamLogic(request: CallableRequest<void>): Promise<{ left: boolean }> {
+  const db: Firestore = admin.firestore();
+  const userUid = validateAuth(request);
   try {
     let originalTeam: string | null = null;
     await db.runTransaction(async (transaction: Transaction) => {
@@ -280,15 +256,7 @@ async function _leaveTeamLogic(request: CallableRequest<void>): Promise<{ left: 
     logger.log('Finished leave team', { user: userUid });
     return { left: true };
   } catch (e: unknown) {
-    logger.error('Failed to leave team', {
-      owner: userUid,
-      error: e,
-    });
-    if (e instanceof HttpsError) {
-      throw e;
-    }
-    const message = e instanceof Error ? e.message : String(e);
-    throw new HttpsError('internal', 'Error during team leave', message);
+    handleTeamError('leave team', e, { owner: userUid });
   }
 }
 interface JoinTeamData {
@@ -299,10 +267,7 @@ async function _joinTeamLogic(
   request: CallableRequest<JoinTeamData>
 ): Promise<{ joined: boolean }> {
   const db: Firestore = admin.firestore();
-  if (!request.auth) {
-    throw new HttpsError('unauthenticated', 'Authentication required.');
-  }
-  const userUid: string = request.auth.uid;
+  const userUid = validateAuth(request);
   const data = request.data;
   try {
     await db.runTransaction(async (transaction: Transaction) => {
@@ -340,16 +305,7 @@ async function _joinTeamLogic(
     });
     return { joined: true };
   } catch (e: unknown) {
-    logger.error('Failed to join team', {
-      user: userUid,
-      team: data.id,
-      error: e,
-    });
-    if (e instanceof HttpsError) {
-      throw e;
-    }
-    const message = e instanceof Error ? e.message : String(e);
-    throw new HttpsError('internal', 'Error during team join', message);
+    handleTeamError('join team', e, { user: userUid, team: data.id });
   }
 }
 interface CreateTeamData {
@@ -360,40 +316,28 @@ async function _createTeamLogic(
   request: CallableRequest<CreateTeamData>
 ): Promise<{ team: string; password?: string }> {
   const db: Firestore = admin.firestore();
-  if (!request.auth) {
-    throw new HttpsError('unauthenticated', 'Authentication required.');
-  }
-  const userUid: string = request.auth.uid;
+  const userUid = validateAuth(request);
   const data = request.data;
   try {
     let createdTeam = '';
     let finalTeamPassword = '';
     await db.runTransaction(async (transaction: Transaction) => {
       try {
-        logger.log('[createTeam] Transaction start', { userUid });
         const systemRef: DocumentReference<SystemDocData> = db
           .collection('system')
           .doc(userUid) as DocumentReference<SystemDocData>;
-        logger.log('[createTeam] systemRef', { path: systemRef.path });
         const systemDoc: DocumentSnapshot<SystemDocData> = await transaction.get(systemRef);
         const systemData = systemDoc?.data();
-        logger.log('[createTeam] systemData', { systemData });
+
         if (systemData?.team) {
-          logger.log('[createTeam] User already in team', {
-            team: systemData.team,
-          });
           throw new HttpsError('failed-precondition', 'User is already in a team.');
         }
+
         if (systemData?.lastLeftTeam) {
           const now = admin.firestore.Timestamp.now();
           const fiveMinutesAgo = admin.firestore.Timestamp.fromMillis(
             now.toMillis() - 5 * 60 * 1000
           );
-          logger.log('[createTeam] lastLeftTeam', {
-            lastLeftTeam: systemData.lastLeftTeam.toMillis(),
-            now: now.toMillis(),
-            fiveMinutesAgo: fiveMinutesAgo.toMillis(),
-          });
           if (systemData.lastLeftTeam > fiveMinutesAgo) {
             throw new HttpsError(
               'failed-precondition',
@@ -401,48 +345,15 @@ async function _createTeamLogic(
             );
           }
         }
-        logger.log('[createTeam] Creating UIDGenerator');
+
         const uidgen = new UIDGenerator(32);
         const teamId = await uidgen.generate();
-        logger.log('[createTeam] Generated teamId', { teamId });
-        let teamPassword = data.password;
-        logger.log('[createTeam] DEBUG: Initial teamPassword from data (data.password):');
-        logger.log(data.password === undefined ? 'undefined' : data.password);
-        if (!teamPassword) {
-          logger.log('[createTeam] DEBUG: No client password, generating one...');
-          try {
-            const passGen = new UIDGenerator(48, UIDGenerator.BASE62);
-            const generatedPass = await passGen.generate();
-            logger.log('[createTeam] DEBUG: Raw generatedPass:');
-            logger.log(generatedPass === undefined ? 'undefined' : generatedPass);
-            if (generatedPass && generatedPass.length >= 4) {
-              teamPassword = generatedPass;
-              logger.log('[createTeam] DEBUG: Using generated password (masked): ****');
-            } else {
-              logger.warn(
-                '[createTeam] DEBUG: Generated password was short or falsy. Raw:',
-                generatedPass,
-                'Using fallback: DEBUG_PASS_123'
-              );
-              teamPassword = 'DEBUG_PASS_123';
-            }
-          } catch (genError) {
-            logger.error('[createTeam] DEBUG: Error during password generation:', genError);
-            teamPassword = 'ERROR_PASS_456';
-          }
-        } else {
-          logger.log('[createTeam] DEBUG: Using client-provided password (masked): ****');
-        }
+        const teamPassword = data.password || (await generateSecurePassword());
+
         finalTeamPassword = teamPassword;
-        logger.log(
-          '[createTeam] DEBUG: Final teamPassword before set (masked):',
-          teamPassword ? '****' : '(IT IS FALSY)',
-          'Actual value for Firestore:',
-          teamPassword
-        );
         createdTeam = teamId;
         const teamRef = db.collection('team').doc(teamId);
-        logger.log('[createTeam] teamRef', { path: teamRef.path });
+
         transaction.set(teamRef, {
           owner: userUid,
           password: teamPassword,
@@ -450,25 +361,10 @@ async function _createTeamLogic(
           members: [userUid],
           createdAt: FieldValue.serverTimestamp(),
         });
-        logger.log('[createTeam] Set team document');
+
         transaction.set(systemRef, { team: teamId }, { merge: true });
-        logger.log('[createTeam] Set system document');
       } catch (err) {
-        logger.error('[createTeam] Error inside transaction', {
-          error: err,
-          errorString: JSON.stringify(err),
-          errorMessage:
-            typeof err === 'object' && err !== null && 'message' in err
-              ? String((err as { message: unknown }).message)
-              : (err?.toString?.() ?? String(err)),
-          errorStack:
-            typeof err === 'object' &&
-            err !== null &&
-            'stack' in err &&
-            (err as { stack?: unknown }).stack
-              ? String((err as { stack: unknown }).stack)
-              : undefined,
-        });
+        logger.error('[createTeam] Error inside transaction:', err);
         throw err;
       }
     });
@@ -479,24 +375,7 @@ async function _createTeamLogic(
     });
     return { team: createdTeam, password: finalTeamPassword };
   } catch (e: unknown) {
-    logger.error('Failed to create team', {
-      owner: userUid,
-      error: e,
-      errorString: JSON.stringify(e),
-      errorMessage:
-        typeof e === 'object' && e !== null && 'message' in e
-          ? String((e as { message: unknown }).message)
-          : (e?.toString?.() ?? String(e)),
-      errorStack:
-        typeof e === 'object' && e !== null && 'stack' in e && (e as { stack?: unknown }).stack
-          ? String((e as { stack: unknown }).stack)
-          : undefined,
-    });
-    if (e instanceof HttpsError) {
-      throw e;
-    }
-    const message = e instanceof Error ? e.message : String(e);
-    throw new HttpsError('internal', 'Error during team creation', message);
+    handleTeamError('create team', e, { owner: userUid });
   }
 }
 interface KickTeamMemberData {
@@ -506,17 +385,16 @@ async function _kickTeamMemberLogic(
   request: CallableRequest<KickTeamMemberData>
 ): Promise<{ kicked: boolean }> {
   const db: Firestore = admin.firestore();
-  if (!request.auth) {
-    throw new HttpsError('unauthenticated', 'Authentication required.');
-  }
-  const userUid: string = request.auth.uid;
+  const userUid = validateAuth(request);
   const data = request.data;
+
   if (!data.kicked) {
     throw new HttpsError('invalid-argument', 'Kicked user ID required.');
   }
   if (data.kicked === userUid) {
     throw new HttpsError('invalid-argument', "You can't kick yourself.");
   }
+
   try {
     await db.runTransaction(async (transaction: Transaction) => {
       const systemRef: DocumentReference<SystemDocData> = db
@@ -558,16 +436,7 @@ async function _kickTeamMemberLogic(
     });
     return { kicked: true };
   } catch (e: unknown) {
-    logger.error('Failed to kick team member', {
-      owner: userUid,
-      kicked: data.kicked,
-      error: e,
-    });
-    if (e instanceof HttpsError) {
-      throw e;
-    }
-    const message = e instanceof Error ? e.message : String(e);
-    throw new HttpsError('internal', 'Error kicking member', message);
+    handleTeamError('kick team member', e, { owner: userUid, kicked: data.kicked });
   }
 }
 export const createTeam = functions.https.onCall(_createTeamLogic);
