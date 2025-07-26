@@ -91,6 +91,7 @@ export interface TaskObjective {
   id: string;
   description?: string;
   location?: { id: string; name?: string };
+  maps?: { id: string; name?: string }[];
   item?: TarkovItem;
   markerItem?: TarkovItem;
   count?: number;
@@ -120,6 +121,7 @@ export interface Task {
   kappaRequired?: boolean;
   experience?: number;
   map?: { id: string; name?: string };
+  locations?: string[];
   trader?: { id: string; name?: string; imageLink?: string };
   objectives?: TaskObjective[];
   taskRequirements?: TaskRequirement[];

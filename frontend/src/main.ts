@@ -8,7 +8,7 @@ import pinia from './plugins/pinia';
 import apolloClient from './plugins/apollo';
 import { VueFire } from 'vuefire';
 import { app as fireapp } from './plugins/firebase';
-import { markInitialized, forceInitialize } from './plugins/store-initializer';
+import { markInitialized } from './plugins/store-initializer';
 import { markI18nReady } from '@/composables/utils/i18nHelpers';
 // Base app component
 import App from './App.vue';
@@ -37,14 +37,9 @@ app.use(i18n);
 // Mark i18n as ready for our composables
 markI18nReady();
 
-// Initialize Pinia first
-app.use(pinia);
-
-// Force initialize the store system as a failsafe
-forceInitialize();
-
-// Continue with the rest of the initialization
+// Initialize Pinia and other plugins
 app
+  .use(pinia)
   .use(router)
   .use(vuetify)
   .use(VueFire, {
@@ -54,5 +49,5 @@ app
   .provide(DefaultApolloClient, apolloClient)
   .mount('#app');
 
-// Ensure the store system is marked as initialized
+// Mark the store system as initialized
 markInitialized();

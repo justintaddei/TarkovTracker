@@ -3,8 +3,7 @@ import { watch } from 'vue';
 import { fireuser, firestore } from '@/plugins/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { getters, actions, defaultState, type UserState, type UserActions } from '@/shared_state';
-import { initializeStore, wasDataMigrated } from '@/plugins/store-initializer';
-import type { Pinia } from 'pinia';
+import { wasDataMigrated } from '@/plugins/store-initializer';
 import type { StoreWithFireswapExt } from '@/plugins/pinia-firestore';
 
 // Define the Fireswap configuration type
@@ -52,14 +51,10 @@ export const useTarkovStore = defineStore('swapTarkov', {
 type TarkovStoreType = ReturnType<typeof useTarkovStore>;
 // Type the store instance potentially returned by initializeStore
 type StoreInstance = TarkovStoreType | null;
-const getSafeStoreInstance = async (_piniaInstance?: Pinia): Promise<StoreInstance> => {
+const getSafeStoreInstance = (): StoreInstance => {
   try {
-    const store = await initializeStore('tarkov', useTarkovStore);
-    if (store && typeof store.$id === 'string') {
-      return store as TarkovStoreType; // Cast to the inferred store type
-    }
-    console.warn('initializeStore did not return a valid store instance.');
-    return null;
+    const store = useTarkovStore();
+    return store && typeof store.$id === 'string' ? store : null;
   } catch (error) {
     console.error('Could not initialize tarkov store:', error);
     return null;
@@ -75,7 +70,7 @@ watch(
     watchHandlerRunning = true;
     try {
       await new Promise((resolve) => setTimeout(resolve, 100));
-      const tarkovStore = await getSafeStoreInstance();
+      const tarkovStore = getSafeStoreInstance();
       if (!tarkovStore) {
         console.warn('Cannot bind/unbind store - store instance is null');
         watchHandlerRunning = false;
@@ -109,7 +104,7 @@ watch(
 );
 setTimeout(async () => {
   try {
-    const tarkovStore = await getSafeStoreInstance();
+    const tarkovStore = getSafeStoreInstance();
     if (!tarkovStore) {
       throw new Error('Failed to get tarkovStore in delayed initialization');
     }

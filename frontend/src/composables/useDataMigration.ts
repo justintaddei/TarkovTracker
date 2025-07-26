@@ -3,6 +3,7 @@ import { fireuser } from '@/plugins/firebase';
 import { markDataMigrated } from '@/plugins/store-initializer';
 import DataMigrationService, { type ProgressData } from '@/utils/DataMigrationService';
 import { useTarkovStore } from '@/stores/tarkov';
+import type { StoreWithFireswapExt } from '@/plugins/pinia-firestore';
 
 export type ImportedData = ProgressData;
 
@@ -27,7 +28,7 @@ export function useDataMigration() {
   const showObjectivesDetails = ref(false);
   const showFailedTaskDetails = ref(false);
 
-  const tarkovStore = useTarkovStore();
+  const tarkovStore = useTarkovStore() as StoreWithFireswapExt<ReturnType<typeof useTarkovStore>>;
 
   // Computed properties for data counts
   const countCompletedTasks = computed(() => {

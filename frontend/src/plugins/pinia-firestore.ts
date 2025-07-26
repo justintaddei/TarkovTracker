@@ -158,12 +158,12 @@ export function PiniaFireswap(context: PiniaPluginContext): void {
             fireswapSetting.loadLocal?.();
           }
         };
-        fireswapSetting.uploadDocument = debounce((currentStateSnapshot: StateTree) => {
+        const uploadFunction = (currentStateSnapshot: StateTree) => {
           fireswapSetting.lock = true;
           // Ensure the 'saving' property is not part of the state to be saved.
           const stateToSave = path !== '.' ? get(currentStateSnapshot, path) : currentStateSnapshot;
 
-          if (!Object.keys(stateToSave).length) {
+          if (!stateToSave || !Object.keys(stateToSave as Record<string, unknown>).length) {
             // Check if stateToSave is empty after destructuring
             fireswapSetting.lock = false;
             // Reset saving flags if the store has them, even if stateToSave is empty
@@ -181,7 +181,7 @@ export function PiniaFireswap(context: PiniaPluginContext): void {
           if (fireuser.loggedIn && fireuser.uid) {
             try {
               const docRef = parseDoc(fireswapSetting.document);
-              setDoc(docRef, stateToSave, { merge: true })
+              setDoc(docRef, stateToSave as Record<string, unknown>, { merge: true })
                 .then(() => {
                   /* Intentionally ignored */
                 })
@@ -214,7 +214,8 @@ export function PiniaFireswap(context: PiniaPluginContext): void {
               }, 50); // Adjust as necessary
             }
           }
-        }, debouncems);
+        };
+        fireswapSetting.uploadDocument = debounce(uploadFunction as (...args: unknown[]) => unknown, debouncems) as ((state: StateTree) => void) & { cancel: () => void };
         store.$subscribe(
           (mutation: SubscriptionCallbackMutation<StateTree>, state: StateTree) => {
             if (fireswapSetting.lock) {
