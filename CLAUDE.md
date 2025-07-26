@@ -18,15 +18,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Frontend Development
 
-- `npm run build:frontend` - Build frontend for development
-- `npm run build:frontend:prod` - Build frontend for production
+- `cd frontend && npm run dev` - Start frontend development server only
+- `npm run build:frontend` - Build frontend only
 - `cd frontend && npm run type-check` - Type check frontend code
 
 ### Backend/Functions Development
 
 - `npm run build:functions` - Build Firebase Cloud Functions
-- `npm run emulators:local` - Build functions and start emulators with local data
-- `npm run docs:generate` - Build functions and generate complete API docs
+- `npm run emulators` - Start Firebase emulators
+- `npm run emulators:local` - Start emulators with local data import
+- `npm run export:data` - Export emulator data to local_data directory
+
+### API Documentation
+
+- `npm run docs` - Generate API documentation
+- `npm run docs:generate` - Build functions and generate API docs
+- `npm run docs:serve` - Generate docs and show instructions to view
 
 ### Deployment
 
@@ -118,17 +125,21 @@ This is a **monorepo** with two main workspaces:
 - Components in `/frontend/src/features/` organized by domain
 - Shared UI components in `/frontend/src/features/ui/`
 - Follow Vuetify component patterns and theming
+- **Keep components under 300 lines** - decompose large files into smaller, focused components
 
 ### State Management
 
 - Use Pinia stores for all state management
-- Store files in `/frontend/src/stores/`
+- Store files in `/frontend/src/stores/` (consolidated from previous `/composables/stores/`)
 - Composables for reusable reactive logic in `/frontend/src/composables/`
+- Use proper TypeScript casting for Firestore plugin extensions
 
 ### API Development
 
-- Express routes in `/functions/src/index.ts`
-- Separate handler files in domain folders (e.g., `/functions/src/progress/`)
+- **Handlers**: Organized in `/functions/src/handlers/` by domain (progress, team, token)  
+- **Services**: Business logic extracted to `/functions/src/services/`
+- **Middleware**: Authentication and error handling in `/functions/src/middleware/`
+- **Types**: Shared interfaces in `/functions/src/types/`
 - Use TypeScript interfaces for all data structures
 - Implement both callable and HTTP endpoints for flexibility
 
@@ -137,3 +148,25 @@ This is a **monorepo** with two main workspaces:
 - Always use Firestore transactions for multi-document operations
 - Implement proper error handling and logging
 - Use typed document references and snapshots
+
+## Code Quality Standards
+
+### Complexity Management
+
+- **Functions**: Keep Firebase Cloud Functions handlers focused and under 200 lines each
+- **Components**: Vue components over 400 lines should be decomposed into smaller, focused components  
+- **Stores**: Extract reusable state logic into shared_state.ts patterns
+- **Templates**: Avoid deeply nested template structures - use composition
+- **Clean Code**: Remove commented imports, unused files, and redundant abstractions
+
+### Import Organization
+
+- Use absolute imports with `@/` prefix
+- Group imports: Vue/framework first, then local imports
+- Remove unused imports regularly
+
+### TypeScript Usage
+
+- Cast Pinia stores properly when using plugins: `as StoreWithFireswapExt<ReturnType<typeof useStore>>`
+- Avoid `any` types - use proper interfaces
+- Use proper null checking for optional values

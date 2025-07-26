@@ -7,9 +7,8 @@ This is a monorepo with two main workspaces: `frontend` and `functions`. Scripts
 ### Development
 
 ```bash
-npm run dev              # Start frontend + functions emulators
-npm run frontend         # Start frontend only
-npm run emulators:local  # Start emulators with local data
+npm run dev         # Start frontend + functions emulators
+npm run emulators   # Start emulators with local data (backend only)
 ```
 
 ### Building
@@ -23,9 +22,7 @@ npm run build:frontend   # Build frontend only
 ### API Documentation
 
 ```bash
-npm run docs             # Generate OpenAPI/Swagger docs
-npm run docs:generate    # Build functions + generate docs
-npm run docs:serve       # Generate docs + show viewing instructions
+npm run docs             # Build functions + generate docs + show viewing instructions
 ```
 
 ### Deployment
@@ -45,22 +42,11 @@ npm run deploy:prod      # Deploy to production environment
 - **Process**: Starts frontend dev server + Firebase emulators concurrently
 - **Best for**: Daily development workflow
 
-#### `npm run frontend`
+#### `npm run emulators`
 
-- **Purpose**: Frontend development only
-- **Process**: Starts Vite dev server for frontend
-- **Best for**: Pure frontend development
-
-#### `npm run emulators:start`
-
-- **Purpose**: Start Firebase emulators (clean state)
-- **Best for**: Testing with fresh data
-
-#### `npm run emulators:local`
-
-- **Purpose**: Start Firebase emulators with local data
+- **Purpose**: Start Firebase emulators with local data (backend only)
 - **Process**: Builds functions + starts emulators with imported data
-- **Best for**: Development with existing test data
+- **Best for**: Backend development or testing with existing test data
 
 ### Build Scripts
 
@@ -82,59 +68,28 @@ npm run deploy:prod      # Deploy to production environment
 - **Process**: Builds Vue.js frontend
 - **Best for**: Frontend-only deployments
 
-#### `npm run build:frontend:dev`
-
-- **Purpose**: Build frontend for development environment
-- **Best for**: Development deployments
-
-#### `npm run build:frontend:prod`
-
-- **Purpose**: Build frontend for production environment
-- **Best for**: Production deployments
 
 ### API Documentation Scripts
 
 #### `npm run docs`
 
-- **Purpose**: Generate API documentation
-- **Process**: Delegates to functions workspace swagger script
+- **Purpose**: Build functions + generate docs + show viewing instructions
+- **Process**: Builds functions, generates Swagger docs, and shows how to view them
 - **Output**: `docs/openapi.json` and `docs/openapi.js`
-- **Best for**: Quick doc generation
-
-#### `npm run docs:generate`
-
-- **Purpose**: Build functions + generate docs
-- **Process**: Ensures functions are built before generating docs
-- **Best for**: Ensuring docs are up-to-date with latest code
-
-#### `npm run docs:serve`
-
-- **Purpose**: Generate docs + viewing instructions
-- **Process**: Generates docs and shows how to view them
-- **Best for**: When you want to immediately view the generated docs
+- **Best for**: Complete documentation workflow
 
 ### Deployment Scripts
 
 #### `npm run deploy:dev`
 
 - **Purpose**: Deploy to development environment
-- **Process**:
-  1. Switch to dev Firebase project
-  2. Build functions
-  3. Generate API docs
-  4. Build frontend for dev
-  5. Deploy everything
+- **Process**: Switch to dev Firebase project → Build functions → Generate docs → Build frontend for dev → Deploy
 - **Best for**: Development releases
 
 #### `npm run deploy:prod`
 
 - **Purpose**: Deploy to production environment
-- **Process**:
-  1. Switch to prod Firebase project
-  2. Build functions
-  3. Generate API docs
-  4. Build frontend for prod
-  5. Deploy everything
+- **Process**: Switch to prod Firebase project → Build functions → Generate docs → Build frontend for prod → Deploy
 - **Best for**: Production releases
 
 ### Quality & Maintenance Scripts
@@ -145,15 +100,6 @@ npm run deploy:prod      # Deploy to production environment
 - **Process**: Runs ESLint on entire monorepo
 - **Best for**: Code quality checks
 
-#### `npm run lint:frontend`
-
-- **Purpose**: Lint frontend code only
-- **Best for**: Frontend-specific linting
-
-#### `npm run lint:functions`
-
-- **Purpose**: Lint functions code only
-- **Best for**: Functions-specific linting
 
 #### `npm run format`
 
@@ -171,10 +117,6 @@ npm run deploy:prod      # Deploy to production environment
 - **Purpose**: Clean up Firebase debug files
 - **Best for**: Cleanup after development
 
-#### `npm run export:data`
-
-- **Purpose**: Export emulator data
-- **Best for**: Saving test data for future use
 
 #### `npm run deps`
 
@@ -217,7 +159,7 @@ npm run dev  # Starts everything you need
 
 ```bash
 npm run build:functions  # Build functions
-npm run docs:serve       # Generate and view API docs
+npm run docs             # Generate and view API docs
 ```
 
 ### 3. Pre-deployment
