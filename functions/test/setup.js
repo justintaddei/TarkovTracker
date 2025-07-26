@@ -118,6 +118,6 @@ beforeEach(() => {
     return callback(transaction);
   });
 });
-console.log('functions/test/setup loaded (SIMPLIFIED mocks)');
+// Test setup complete
 // --- Explicit Exports ---
 export { adminMock, firestoreMock, functionsMock };

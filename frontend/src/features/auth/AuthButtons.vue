@@ -120,31 +120,7 @@
     github: false,
   });
   const userId = ref(null);
-  // Define emits - remove migration related emits if no longer used elsewhere
-  // const emit = defineEmits([]); // Adjusted if no emits are needed
 
-  // Helper function to safely access the store
-  // const getTarkovStore = async () => {
-  //   if (tarkovStore) return tarkovStore;
-  //   try {
-  //     // Wait for next tick and a small delay to ensure Pinia is ready
-  //     await nextTick();
-  //     await new Promise((resolve) => setTimeout(resolve, 100));
-  //     try {
-  //       tarkovStore = useTarkovStore(); // This line would be removed
-  //       return tarkovStore;
-  //     } catch (error) {
-  //       console.error('Initial store access failed, retrying:', error);
-  //       // Try one more time after a delay
-  //       await new Promise((resolve) => setTimeout(resolve, 200));
-  //       tarkovStore = useTarkovStore(); // This line would be removed
-  //       return tarkovStore;
-  //     }
-  //   } catch (error) {
-  //     console.error('Error accessing tarkovStore:', error);
-  //     return null;
-  //   }
-  // };
   // Prevent automatic navigation after login - we'll handle it manually
   onMounted(async () => {
     try {

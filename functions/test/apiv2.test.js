@@ -26,7 +26,7 @@ vi.mock('firebase-functions', () => ({
   default: functionsMock,
 }));
 // Mock auth middleware - updated for ESM export
-vi.mock('../api/v2/middleware/auth', () => ({
+vi.mock('../lib/middleware/auth.js', () => ({
   verifyBearer: vi.fn((req, res, next) => {
     // Simulate attaching token data to req
     req.apiToken = {
@@ -38,7 +38,7 @@ vi.mock('../api/v2/middleware/auth', () => ({
   }),
 }));
 // Mock handlers - updated for ESM default exports
-vi.mock('../api/v2/handlers/tokenHandler', () => ({
+vi.mock('../lib/handlers/tokenHandler.js', () => ({
   default: {
     getTokenInfo: vi.fn((req, res) => {
       res.status(200).json({
@@ -48,7 +48,7 @@ vi.mock('../api/v2/handlers/tokenHandler', () => ({
     }),
   },
 }));
-vi.mock('../api/v2/handlers/progressHandler', () => ({
+vi.mock('../lib/handlers/progressHandler.js', () => ({
   default: {
     getPlayerProgress: vi.fn((req, res) => {
       res.status(200).json({ progress: 'test-progress' });
@@ -79,7 +79,7 @@ describe('Cloud Functions: apiv2', () => {
   it('should be defined when imported', async () => {
     // Use dynamic import for ESM module
     try {
-      const module = await import('../api/v2/index');
+      const module = await import('../lib/index.js');
       apiv2 = module.default;
       expect(apiv2).toBeDefined();
     } catch (err) {
@@ -92,7 +92,7 @@ describe('Cloud Functions: apiv2', () => {
   // Testing token handler directly
   it('should have token handler that returns token info', async () => {
     try {
-      const tokenHandler = await import('../api/v2/handlers/tokenHandler');
+      const tokenHandler = await import('../lib/handlers/tokenHandler.js');
       const { getTokenInfo } = tokenHandler.default;
       const req = {
         apiToken: {
@@ -115,7 +115,7 @@ describe('Cloud Functions: apiv2', () => {
   // Testing auth middleware directly
   it('should have auth middleware that validates tokens', async () => {
     try {
-      const authMiddleware = await import('../api/v2/middleware/auth');
+      const authMiddleware = await import('../lib/middleware/auth.js');
       const { verifyBearer } = authMiddleware;
       const req = mockRequest({ Authorization: 'Bearer valid-token' });
       const res = mockResponse();
@@ -141,7 +141,7 @@ describe('Cloud Functions: apiv2', () => {
   describe('Progress Handler', () => {
     it('should get player progress', async () => {
       try {
-        const progressHandler = await import('../api/v2/handlers/progressHandler');
+        const progressHandler = await import('../lib/handlers/progressHandler.js');
         const { getPlayerProgress } = progressHandler.default;
         const req = {
           apiToken: { permissions: ['read'], owner: 'test-user' },
@@ -158,7 +158,7 @@ describe('Cloud Functions: apiv2', () => {
     });
     it('should get team progress', async () => {
       try {
-        const progressHandler = await import('../api/v2/handlers/progressHandler');
+        const progressHandler = await import('../lib/handlers/progressHandler.js');
         const { getTeamProgress } = progressHandler.default;
         const req = {
           apiToken: { permissions: ['TP'], owner: 'test-user' },
@@ -177,7 +177,7 @@ describe('Cloud Functions: apiv2', () => {
     });
     it('should set player level', async () => {
       try {
-        const progressHandler = await import('../api/v2/handlers/progressHandler');
+        const progressHandler = await import('../lib/handlers/progressHandler.js');
         const { setPlayerLevel } = progressHandler.default;
         const req = {
           apiToken: { permissions: ['write'], owner: 'test-user' },
@@ -203,7 +203,7 @@ describe('Cloud Functions: apiv2', () => {
     });
     it('should update multiple tasks', async () => {
       try {
-        const progressHandler = await import('../api/v2/handlers/progressHandler');
+        const progressHandler = await import('../lib/handlers/progressHandler.js');
         const { updateMultipleTasks } = progressHandler.default;
         const req = {
           apiToken: { permissions: ['write'], owner: 'test-user' },
@@ -233,7 +233,7 @@ describe('Cloud Functions: apiv2', () => {
     });
     it('should update task objective', async () => {
       try {
-        const progressHandler = await import('../api/v2/handlers/progressHandler');
+        const progressHandler = await import('../lib/handlers/progressHandler.js');
         const { updateTaskObjective } = progressHandler.default;
         const req = {
           apiToken: { permissions: ['write'], owner: 'test-user' },
@@ -269,7 +269,7 @@ describe('Cloud Functions: apiv2', () => {
     });
     it('should update a single task', async () => {
       try {
-        const progressHandler = await import('../api/v2/handlers/progressHandler.js');
+        const progressHandler = await import('../lib/handlers/progressHandler.js');
         const { updateSingleTask } = progressHandler.default;
         const req = {
           apiToken: { permissions: ['write'], owner: 'test-user' },
@@ -298,7 +298,7 @@ describe('Cloud Functions: apiv2', () => {
   describe('API Routes', () => {
     it('should have working token endpoint', async () => {
       try {
-        const module = await import('../api/v2/index');
+        const module = await import('../lib/index.js');
         apiv2 = module.default;
         // Create a mock request with appropriate path and method
         const req = {
@@ -314,7 +314,7 @@ describe('Cloud Functions: apiv2', () => {
         };
         const res = mockResponse();
         // Mock the tokenHandler.getTokenInfo function
-        const tokenHandler = await import('../api/v2/handlers/tokenHandler');
+        const tokenHandler = await import('../lib/handlers/tokenHandler.js');
         tokenHandler.default.getTokenInfo = vi.fn((req, res) => {
           res.status(200).json({
             permissions: req.apiToken.permissions,
@@ -335,7 +335,7 @@ describe('Cloud Functions: apiv2', () => {
     });
     it('should have working progress endpoint', async () => {
       try {
-        const module = await import('../api/v2/index');
+        const module = await import('../lib/index.js');
         apiv2 = module.default;
         // Create a mock request with appropriate path and method
         const req = {
@@ -351,7 +351,7 @@ describe('Cloud Functions: apiv2', () => {
         };
         const res = mockResponse();
         // Mock the progressHandler.getPlayerProgress function
-        const progressHandler = await import('../api/v2/handlers/progressHandler.js');
+        const progressHandler = await import('../lib/handlers/progressHandler.js');
         progressHandler.default.getPlayerProgress = vi.fn((req, res) => {
           res.status(200).json({ progress: 'test-progress' });
         });
@@ -366,7 +366,7 @@ describe('Cloud Functions: apiv2', () => {
     });
     it('should have working progress/level endpoint', async () => {
       try {
-        const module = await import('../api/v2/index.js');
+        const module = await import('../lib/index.js');
         apiv2 = module.default;
         // Create a mock request
         const req = {
@@ -384,7 +384,7 @@ describe('Cloud Functions: apiv2', () => {
         };
         const res = mockResponse();
         // Mock the progressHandler function
-        const progressHandler = await import('../api/v2/handlers/progressHandler.js');
+        const progressHandler = await import('../lib/handlers/progressHandler.js');
         progressHandler.default.setPlayerLevel = vi.fn((req, res) => {
           res.status(200).json({ success: true });
         });
@@ -401,7 +401,7 @@ describe('Cloud Functions: apiv2', () => {
   describe('Auth Middleware', () => {
     it('should verify valid tokens', async () => {
       try {
-        const authMiddleware = await import('../api/v2/middleware/auth.js');
+        const authMiddleware = await import('../lib/middleware/auth.js');
         const { verifyBearer } = authMiddleware;
         const req = mockRequest({ Authorization: 'Bearer valid-token' });
         const res = mockResponse();
@@ -429,7 +429,7 @@ describe('Cloud Functions: apiv2', () => {
     });
     it('should reject missing tokens', async () => {
       try {
-        const authMiddleware = await import('../api/v2/middleware/auth.js');
+        const authMiddleware = await import('../lib/middleware/auth.js');
         const { verifyBearer } = authMiddleware;
         const req = mockRequest({
           /* No Authorization header */
@@ -447,7 +447,7 @@ describe('Cloud Functions: apiv2', () => {
     });
     it('should reject invalid token format', async () => {
       try {
-        const authMiddleware = await import('../api/v2/middleware/auth.js');
+        const authMiddleware = await import('../lib/middleware/auth.js');
         const { verifyBearer } = authMiddleware;
         const req = mockRequest({ Authorization: 'InvalidFormat' });
         const res = mockResponse();
@@ -463,7 +463,7 @@ describe('Cloud Functions: apiv2', () => {
     });
     it('should reject non-existent tokens', async () => {
       try {
-        const authMiddleware = await import('../api/v2/middleware/auth.js');
+        const authMiddleware = await import('../lib/middleware/auth.js');
         const { verifyBearer } = authMiddleware;
         const req = mockRequest({ Authorization: 'Bearer non-existent-token' });
         const res = mockResponse();

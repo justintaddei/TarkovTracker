@@ -156,7 +156,10 @@
         if (floorSvg && floorSvg.documentElement) {
           // Set the viewBox from the first floor SVG to ensure proper scaling
           if (!viewBoxSet && floorSvg.documentElement.getAttribute('viewBox')) {
-            mainSvg.setAttribute('viewBox', floorSvg.documentElement.getAttribute('viewBox'));
+            const viewBox = floorSvg.documentElement.getAttribute('viewBox');
+            if (viewBox) {
+              mainSvg.setAttribute('viewBox', viewBox);
+            }
             viewBoxSet = true;
           }
 
@@ -202,7 +205,7 @@
     // Show floors from basement up to selected floor, hide floors above
     floors.forEach((floor: string, index: number) => {
       const floorGroup = svg.querySelector(`#${floor}`);
-      if (floorGroup) {
+      if (floorGroup && floorGroup instanceof SVGGElement) {
         if (index <= selectedFloorIndex) {
           floorGroup.style.display = 'block';
           floorGroup.style.opacity = '1';

@@ -111,7 +111,7 @@ describe('Direct API Tests', () => {
   });
   describe('Auth Middleware', () => {
     it('should import and test verifyBearer', async () => {
-      const authModule = await import('../api/v2/middleware/auth.js');
+      const authModule = await import('../lib/middleware/auth.js');
       auth = authModule;
       expect(auth.verifyBearer).toBeDefined();
       // Mock request and response
@@ -137,7 +137,7 @@ describe('Direct API Tests', () => {
       }
     });
     it('should handle missing Authorization header', async () => {
-      const authModule = await import('../api/v2/middleware/auth.js');
+      const authModule = await import('../lib/middleware/auth.js');
       auth = authModule;
       // Mock request with no Authorization header
       const req = {
@@ -160,7 +160,7 @@ describe('Direct API Tests', () => {
   });
   describe('Token Handler', () => {
     it('should import and test getTokenInfo', async () => {
-      const tokenHandlerModule = await import('../api/v2/handlers/tokenHandler.js');
+      const tokenHandlerModule = await import('../lib/handlers/tokenHandler.js');
       tokenHandler = tokenHandlerModule.default;
       expect(tokenHandler.getTokenInfo).toBeDefined();
       // Mock request with token data
@@ -183,7 +183,7 @@ describe('Direct API Tests', () => {
   });
   describe('API Router', () => {
     it('should import and verify API routes', async () => {
-      const apiModule = await import('../api/v2/index.js');
+      const apiModule = await import('../lib/index.js');
       apiv2 = apiModule.default;
       // Just verify it was initialized
       expect(apiv2).toBeDefined();
@@ -191,7 +191,7 @@ describe('Direct API Tests', () => {
   });
   describe('Progress Handler', () => {
     it('should import and test getPlayerProgress', async () => {
-      const progressHandlerModule = await import('../api/v2/handlers/progressHandler.js');
+      const progressHandlerModule = await import('../lib/handlers/progressHandler.js');
       progressHandler = progressHandlerModule.default;
       expect(progressHandler.getPlayerProgress).toBeDefined();
       // Mock request with player token
@@ -213,7 +213,7 @@ describe('Direct API Tests', () => {
       expect(res.json).toHaveBeenCalled();
     });
     it('should handle unauthorized getPlayerProgress request', async () => {
-      const progressHandlerModule = await import('../api/v2/handlers/progressHandler.js');
+      const progressHandlerModule = await import('../lib/handlers/progressHandler.js');
       progressHandler = progressHandlerModule.default;
       // Mock request WITHOUT player permission
       const req = {
@@ -234,10 +234,10 @@ describe('Direct API Tests', () => {
       expect(res.send).toHaveBeenCalled();
     });
     it('should handle updateSingleTask', async () => {
-      const progressHandlerModule = await import('../api/v2/handlers/progressHandler.js');
+      const progressHandlerModule = await import('../lib/handlers/progressHandler.js');
       progressHandler = progressHandlerModule.default;
       // Import progressUtils so we can spy on it
-      const progressUtils = await import('../api/v2/utils/progressUtils.js');
+      const progressUtils = await import('../lib/progress/progressUtils.js');
       // Spy on updateTaskState
       const updateTaskStateSpy = vi.spyOn(progressUtils, 'updateTaskState');
       // Setup mock to return a mock task
@@ -269,7 +269,7 @@ describe('Direct API Tests', () => {
         send: vi.fn().mockReturnThis(),
       };
       // Mock getTaskData to return a valid task
-      const getTaskDataModule = await import('../api/v2/utils/dataLoaders.js');
+      const getTaskDataModule = await import('../lib/utils/dataLoaders.js');
       vi.spyOn(getTaskDataModule, 'getTaskData').mockResolvedValue({
         tasks: [{ id: 'test-task', objectives: [], minPlayerLevel: 1 }],
       });
@@ -284,7 +284,7 @@ describe('Direct API Tests', () => {
       expect(res.send).toHaveBeenCalled();
     });
     it('should handle unauthorized updateSingleTask', async () => {
-      const progressHandlerModule = await import('../api/v2/handlers/progressHandler.js');
+      const progressHandlerModule = await import('../lib/handlers/progressHandler.js');
       progressHandler = progressHandlerModule.default;
       // Mock request WITHOUT write permission
       const req = {
@@ -309,7 +309,7 @@ describe('Direct API Tests', () => {
   });
   describe('Utility Functions', () => {
     it('should import and test dataLoaders', async () => {
-      const dataLoaders = await import('../api/v2/utils/dataLoaders.js');
+      const dataLoaders = await import('../lib/utils/dataLoaders.js');
       expect(dataLoaders.getTaskData).toBeDefined();
       expect(dataLoaders.getHideoutData).toBeDefined();
       // Call functions - they might not complete due to mocks, but will increase coverage
@@ -325,7 +325,7 @@ describe('Direct API Tests', () => {
       }
     });
     it('should import and test progressUtils', async () => {
-      const progressUtils = await import('../api/v2/utils/progressUtils.js');
+      const progressUtils = await import('../lib/progress/progressUtils.js');
       expect(progressUtils.formatProgress).toBeDefined();
       expect(progressUtils.updateTaskState).toBeDefined();
       // Test formatProgress with minimal data

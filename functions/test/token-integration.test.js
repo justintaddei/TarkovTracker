@@ -1,7 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { firestoreMock } from './setup'; // Import top-level spies
-import { createToken } from '../api/token/create';
-import { revokeToken } from '../api/token/revoke';
+import { createToken } from '../lib/token/create.js';
+import { revokeToken } from '../lib/token/revoke.js';
 // --- Test Suite ---
 describe('Token API Integration', () => {
   let mockContext;

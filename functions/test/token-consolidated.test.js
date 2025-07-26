@@ -136,9 +136,9 @@ describe('Token Management', () => {
   it('should import token functions', async () => {
     // Use dynamic import to handle ESM modules
     try {
-      const createModule = await import('../api/token/create');
+      const createModule = await import('../lib/token/create.js');
       const actualCreateTokenLogic = createModule._createTokenLogic;
-      const revokeModule = await import('../api/token/revoke');
+      const revokeModule = await import('../lib/token/revoke.js');
       const actualRevokeTokenLogic = revokeModule._revokeTokenLogic;
       // Only override if both imports succeeded
       if (actualCreateTokenLogic && actualRevokeTokenLogic) {

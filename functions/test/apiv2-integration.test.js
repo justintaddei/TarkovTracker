@@ -21,7 +21,7 @@ const mockRequest = (headers = {}, params = {}, body = {}) => ({
 describe('API v2 Integration Tests', () => {
   describe('Auth Middleware', () => {
     it('should authenticate a valid token', async () => {
-      const authMiddleware = await import('../api/v2/middleware/auth');
+      const authMiddleware = await import('../lib/middleware/auth.js');
       const { verifyBearer } = authMiddleware;
       // --- Setup: Mock Firestore for this specific test ---
       const getSpy = vi.fn().mockResolvedValue({
@@ -47,7 +47,7 @@ describe('API v2 Integration Tests', () => {
       expect(next).toHaveBeenCalled();
     });
     it('should reject invalid tokens', async () => {
-      const authMiddleware = await import('../api/v2/middleware/auth');
+      const authMiddleware = await import('../lib/middleware/auth.js');
       const { verifyBearer } = authMiddleware;
       // --- Setup: Use default mocks (get returns exists: false) ---
       const getSpy = vi.fn().mockResolvedValue({ exists: false });
@@ -74,7 +74,7 @@ describe('API v2 Integration Tests', () => {
       getHideoutData: vi.fn().mockResolvedValue({ hideoutStations: [] }),
     }));
     it('should handle player progress requests', async () => {
-      const progressHandler = await import('../api/v2/handlers/progressHandler');
+      const progressHandler = await import('../lib/handlers/progressHandler.js');
       // --- Setup: Mock Firestore get for progress doc ---
       const mockDocMethods = {
         get: vi.fn().mockResolvedValue({
@@ -109,7 +109,7 @@ describe('API v2 Integration Tests', () => {
     it('should update player task state', async () => {
       let progressHandler;
       // Use dynamic import *after* mocks are set up
-      progressHandler = (await import('../api/v2/handlers/progressHandler')).default;
+      progressHandler = (await import('../lib/handlers/progressHandler.js')).default;
       // --- Setup: Rely on default transaction mock from setup ---
       // Default transaction mock handles get/update checks internally via setup
       // --- End Setup ---
@@ -133,7 +133,7 @@ describe('API v2 Integration Tests', () => {
   });
   describe('API Router', () => {
     it('should define all required routes', async () => {
-      const module = await import('../api/v2/index.js');
+      const module = await import('../lib/index.js');
       const rawApiApp = module.rawApp;
       expect(rawApiApp).toBeDefined();
     });
