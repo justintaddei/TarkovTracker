@@ -20,6 +20,12 @@ export default [
       'frontend/src/features/game/TarkovItem.vue',
       'frontend/src/features/maps/TarkovMap.vue', 
       'frontend/src/features/ui/TrackerTip.vue',
+      'frontend/src/features/neededitems/components/ItemCountControls.vue',
+      'frontend/src/features/neededitems/components/ItemImage.vue',
+      'frontend/src/features/neededitems/components/RequirementInfo.vue',
+      'frontend/src/features/neededitems/components/TeamNeedsDisplay.vue',
+      'frontend/src/features/tasks/TaskMapPanel.vue',
+      'frontend/src/features/tasks/TaskMapTabs.vue',
     ],
   },
 
