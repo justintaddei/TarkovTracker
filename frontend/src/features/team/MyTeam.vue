@@ -9,14 +9,6 @@
       </div>
       <v-container v-else>
         <team-input-row
-          v-model="displayName"
-          :label="$t('page.team.card.myteam.display_name_label')"
-          icon="mdi-backspace"
-          :maxlength="25"
-          counter
-          @action="clearDisplayName"
-        />
-        <team-input-row
           v-model="visibleUrl"
           :label="$t('page.team.card.myteam.team_invite_url_label')"
           icon="mdi-content-copy"
@@ -206,12 +198,6 @@
     userStore.getStreamerMode ? t('page.team.card.myteam.url_hidden') : teamUrl.value
   );
 
-  const displayName = computed({
-    get: () => tarkovStore.displayName || fireuser.uid?.substring(0, 6) || 'ErrorName',
-    set: (newName) => newName && tarkovStore.setDisplayName(newName),
-  });
-
-  const clearDisplayName = () => tarkovStore.setDisplayName(null);
 
   watch(
     () => tarkovStore.getDisplayName,

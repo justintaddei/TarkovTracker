@@ -17,7 +17,6 @@ export interface ProgressData {
   autoMigrated?: boolean;
   imported?: boolean;
 }
-
 export class DataValidationUtils {
   /**
    * Check if user has significant progress data worth preserving
@@ -31,7 +30,6 @@ export class DataValidationUtils {
       Object.keys(data.hideoutParts || {}).length > 0
     );
   }
-
   /**
    * Validate that an object has the structure of progress data
    */
@@ -40,7 +38,6 @@ export class DataValidationUtils {
     const typed = data as ProgressData;
     return typeof typed.level === 'number' && typed.level >= 1;
   }
-
   /**
    * Validate import file format structure
    */
@@ -56,14 +53,12 @@ export class DataValidationUtils {
       this.isValidProgressData((parsedJson as { data: unknown }).data)
     );
   }
-
   /**
    * Validate API token format
    */
   static isValidApiToken(token: string): boolean {
     return typeof token === 'string' && token.length > 10 && token.trim() === token;
   }
-
   /**
    * Check if data is worth migrating (has meaningful content)
    */
@@ -75,14 +70,12 @@ export class DataValidationUtils {
       data.pmcFaction !== 'usec'
     );
   }
-
   /**
    * Validate that an object looks like old API data
    */
   static isValidOldApiData(data: unknown): boolean {
     if (typeof data !== 'object' || data === null) return false;
     const typed = data as Record<string, unknown>;
-
     // Must have at least level or playerLevel
     return (
       typeof typed.level === 'number' ||
@@ -91,7 +84,6 @@ export class DataValidationUtils {
       Array.isArray(typed.hideoutModulesProgress)
     );
   }
-
   /**
    * Sanitize user input data
    */

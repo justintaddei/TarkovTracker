@@ -38,7 +38,15 @@
     <template #append>
       <v-menu v-model="state.menu" :close-on-content-click="false" location="start">
         <template #activator="{ props }">
-          <v-btn icon="mdi-dots-vertical" v-bind="props"></v-btn>
+          <v-badge
+            :content="currentGameMode.toUpperCase()"
+            :color="gameModeColor"
+            location="top left"
+            offset-x="4"
+            offset-y="4"
+          >
+            <v-btn icon="mdi-cog" v-bind="props"></v-btn>
+          </v-badge>
         </template>
         <overflow-menu />
       </v-menu>
@@ -49,6 +57,7 @@
   import { computed } from 'vue';
   import { defineAsyncComponent } from 'vue';
   import { useAppStore } from '@/stores/app';
+  import { useTarkovStore } from '@/stores/tarkov';
   import { useDisplay } from 'vuetify';
   import { useRoute } from 'vue-router';
   import { reactive } from 'vue';
@@ -57,10 +66,20 @@
   const { t } = useI18n({ useScope: 'global' });
   const state = reactive({ menu: null });
   const appStore = useAppStore();
+  const tarkovStore = useTarkovStore();
   const route = useRoute();
   const navBarIcon = computed(() => {
     return appStore.drawerShow && appStore.drawerRail ? 'mdi-menu-open' : 'mdi-menu';
   });
+  
+  const currentGameMode = computed(() => {
+    return tarkovStore.getCurrentGameMode();
+  });
+  
+  const gameModeColor = computed(() => {
+    return currentGameMode.value === 'pvp' ? 'red' : 'green';
+  });
+  
   const OverflowMenu = defineAsyncComponent(() => import('@/features/layout/OverflowMenu'));
   const { loading: dataLoading, error: dataError, hideoutLoading } = useTarkovData();
   const { mdAndDown } = useDisplay();

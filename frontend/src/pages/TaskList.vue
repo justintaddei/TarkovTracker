@@ -78,7 +78,7 @@
       </v-col>
     </v-row>
     <v-row dense>
-      <v-col lg="6" md="6">
+      <v-col lg="5" md="5">
         <!-- Secondary views (available, locked, completed) -->
         <v-card>
           <v-tabs
@@ -100,7 +100,7 @@
           </v-tabs>
         </v-card>
       </v-col>
-      <v-col lg="6" md="6" class="d-flex align-center">
+      <v-col lg="5" md="5" class="d-flex align-center">
         <!-- User view -->
         <v-card width="100%">
           <v-tabs
@@ -120,6 +120,57 @@
             </v-tab>
           </v-tabs>
         </v-card>
+      </v-col>
+      <v-col lg="2" md="2" class="d-flex align-center">
+        <!-- Filters button -->
+        <v-dialog v-model="filtersDialog" scrim="#9A8866">
+          <template #activator="{ props }">
+            <v-btn v-bind="props" variant="tonal" style="width: 100%; height: 48px" class="px-0">
+              <v-icon>mdi-filter-cog</v-icon>
+            </v-btn>
+          </template>
+          <v-row class="justify-center">
+            <v-col cols="auto">
+              <v-card :title="$t('page.tasks.filters.title')" style="width: fit-content">
+                <v-card-text>
+                  <v-container class="ma-0 pa-0">
+                    <v-row dense>
+                      <v-col cols="12">
+                        <v-switch
+                          v-model="hideGlobalTasks"
+                          :label="$t(hideGlobalTasksLabel)"
+                          inset
+                          true-icon="mdi-eye-off"
+                          false-icon="mdi-eye"
+                          :color="hideGlobalTasksColor"
+                          hide-details
+                          density="compact"
+                        ></v-switch>
+                        <v-switch
+                          v-model="hideNonKappaTasks"
+                          :label="$t(hideNonKappaTasksLabel)"
+                          inset
+                          true-icon="mdi-eye-off"
+                          false-icon="mdi-eye"
+                          :color="hideNonKappaTasksColor"
+                          hide-details
+                          density="compact"
+                        ></v-switch>
+                      </v-col>
+                    </v-row>
+                    <v-row justify="end">
+                      <v-col cols="12" md="6">
+                        <v-btn color="primary" block @click="filtersDialog = false">{{
+                          $t('page.tasks.filters.close')
+                        }}</v-btn>
+                      </v-col>
+                    </v-row>
+                  </v-container>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-dialog>
       </v-col>
     </v-row>
     <v-row justify="center">
@@ -246,12 +297,27 @@
     },
   });
   const expandMap = ref([0]);
+  const filtersDialog = ref(false);
   const hideGlobalTasks = computed({
     get: () => userStore.getHideGlobalTasks,
+    set: (value) => userStore.setHideGlobalTasks(value),
   });
   const hideNonKappaTasks = computed({
     get: () => userStore.getHideNonKappaTasks,
+    set: (value) => userStore.setHideNonKappaTasks(value),
   });
+  const hideGlobalTasksLabel = computed(() =>
+    hideGlobalTasks.value
+      ? 'page.tasks.filters.hide_global_tasks'
+      : 'page.tasks.filters.show_global_tasks'
+  );
+  const hideNonKappaTasksLabel = computed(() =>
+    hideNonKappaTasks.value
+      ? 'page.tasks.filters.hide_non_kappa_tasks'
+      : 'page.tasks.filters.show_non_kappa_tasks'
+  );
+  const hideGlobalTasksColor = computed(() => (hideGlobalTasks.value ? 'error' : 'success'));
+  const hideNonKappaTasksColor = computed(() => (hideNonKappaTasks.value ? 'error' : 'success'));
   const activeUserView = computed({
     get: () => userStore.getTaskUserView,
     set: (value) => userStore.setTaskUserView(value),

@@ -109,6 +109,29 @@ export const useTarkovStore = defineStore('swapTarkov', {
         console.error('Error resetting online profile:', error);
       }
     },
+    async resetCurrentGameModeData() {
+      if (!fireuser.uid) {
+        console.error('User not logged in. Cannot reset game mode data.');
+        return;
+      }
+      
+      const currentMode = this.getCurrentGameMode();
+      const userProgressRef = doc(firestore, 'progress', fireuser.uid);
+      
+      try {
+        // Create fresh default progress data for the current game mode
+        const freshProgressData = JSON.parse(JSON.stringify(defaultState[currentMode]));
+        
+        // Update only the current game mode data in Firestore
+        const updateData = { [currentMode]: freshProgressData };
+        await setDoc(userProgressRef, updateData, { merge: true });
+        
+        // Reset only the current game mode data in the local store
+        this.$patch({ [currentMode]: freshProgressData });
+      } catch (error) {
+        console.error(`Error resetting ${currentMode} game mode data:`, error);
+      }
+    },
   },
   fireswap: [
     {

@@ -1,11 +1,12 @@
 import { firestore } from '@/plugins/firebase';
 import { doc, getDoc, setDoc } from '@/plugins/firebase';
 import type { DocumentData } from 'firebase/firestore';
-
+import type { GameMode, UserState, UserProgressData } from '@/shared_state';
+import { defaultState, migrateToGameModeStructure } from '@/shared_state';
 // Define a basic interface for the progress data structure
 export interface ProgressData {
   level: number;
-  gameEdition?: string; // Optional fields can be marked with ?
+  gameEdition?: string;
   pmcFaction?: string;
   displayName?: string;
   taskCompletions?: {
@@ -30,13 +31,12 @@ export interface ProgressData {
   migratedFromLocalStorage?: boolean;
   migrationDate?: string;
   autoMigrated?: boolean;
-  imported?: boolean; // Assuming this is a boolean flag
+  imported?: boolean;
   importedFromExternalSource?: boolean;
   importDate?: string;
   importedFromApi?: boolean;
-  sourceUserId?: string; // Or appropriate type
+  sourceUserId?: string;
   sourceDomain?: string;
-  // Allow any other properties, as the structure seems flexible
   [key: string]: unknown;
 }
 // Interface for the exported data object
@@ -46,13 +46,64 @@ interface ExportObject {
   version: number;
   data: ProgressData;
 }
-
 const LOCAL_PROGRESS_KEY = 'progress';
-
 /**
  * Service to handle migration of local data to a user's Firebase account
  */
 export default class DataMigrationService {
+  /**
+   * Transform task objectives to ensure proper timestamp format
+   * @param taskObjectives The task objectives to transform
+   * @returns Transformed task objectives compatible with UserProgressData
+   */
+  private static transformTaskObjectives(taskObjectives: ProgressData['taskObjectives']): UserProgressData['taskObjectives'] {
+    const transformed: UserProgressData['taskObjectives'] = {};
+    
+    if (taskObjectives) {
+      for (const [id, objective] of Object.entries(taskObjectives)) {
+        const transformedObjective: Record<string, unknown> = {
+          complete: objective.complete || false,
+          count: objective.count || 0,
+        };
+        
+        // Only include timestamp if it's not null/undefined
+        if (objective.timestamp !== null && objective.timestamp !== undefined) {
+          transformedObjective.timestamp = objective.timestamp;
+        }
+        
+        transformed[id] = transformedObjective;
+      }
+    }
+    
+    return transformed;
+  }
+
+  /**
+   * Transform hideout parts to ensure proper timestamp format
+   * @param hideoutParts The hideout parts to transform
+   * @returns Transformed hideout parts compatible with UserProgressData
+   */
+  private static transformHideoutParts(hideoutParts: ProgressData['hideoutParts']): UserProgressData['hideoutParts'] {
+    const transformed: UserProgressData['hideoutParts'] = {};
+    
+    if (hideoutParts) {
+      for (const [id, part] of Object.entries(hideoutParts)) {
+        const transformedPart: Record<string, unknown> = {
+          complete: part.complete || false,
+          count: part.count || 0,
+        };
+        
+        // Only include timestamp if it's not null/undefined
+        if (part.timestamp !== null && part.timestamp !== undefined) {
+          transformedPart.timestamp = part.timestamp;
+        }
+        
+        transformed[id] = transformedPart;
+      }
+    }
+    
+    return transformed;
+  }
   /**
    * Check if there is local data that can be migrated to a user account
    * @returns {boolean} True if local data exists
@@ -171,7 +222,7 @@ export default class DataMigrationService {
       }
       try {
         const progressRef = doc(firestore, 'progress', uid);
-        await setDoc(progressRef, localData as DocumentData); // Cast to DocumentData
+        await setDoc(progressRef, localData as DocumentData, { merge: true }); // Cast to DocumentData
         const backupKey = `progress_backup_${new Date().toISOString()}`;
         try {
           localStorage.setItem(backupKey, JSON.stringify(localData));
@@ -223,14 +274,13 @@ export default class DataMigrationService {
    */
   static validateImportData(jsonString: string): ProgressData | null {
     try {
-      const parsedJson = JSON.parse(jsonString) as unknown; // Parse as unknown first
-
+      const parsedJson = JSON.parse(jsonString) as unknown;
       if (
         typeof parsedJson !== 'object' ||
         parsedJson === null ||
-        !('type' in parsedJson) || // Ensure 'type' property exists
+        !('type' in parsedJson) ||
         (parsedJson as { type: unknown }).type !== 'tarkovtracker-migration' ||
-        !('data' in parsedJson) // Ensure 'data' property exists
+        !('data' in parsedJson)
       ) {
         console.warn(
           '[DataMigrationService] Invalid import type or structure in parsed JSON:',
@@ -238,11 +288,8 @@ export default class DataMigrationService {
         );
         return null;
       }
-
       // Now we know parsedJson is an object with 'type' (correct value) and 'data'.
       const data = (parsedJson as { data: unknown }).data as ProgressData;
-
-      // Basic validation (can be expanded)
       if (typeof data.level !== 'number') {
         console.warn('[DataMigrationService] Invalid level in import data.');
         return null;
@@ -255,12 +302,13 @@ export default class DataMigrationService {
     }
   }
   /**
-   * Import data from another domain/file to a user's account, overwriting existing data.
+   * Import data from another domain/file to a user's account. Data is always imported into PvP mode.
    * @param {string} uid The user's UID
    * @param {ProgressData} importedData The imported data to save
+   * @param {GameMode} _targetGameMode Ignored - data is always imported into PvP mode
    * @returns {Promise<boolean>} True if import was successful
    */
-  static async importDataToUser(uid: string, importedData: ProgressData): Promise<boolean> {
+  static async importDataToUser(uid: string, importedData: ProgressData, _targetGameMode?: GameMode): Promise<boolean> {
     if (!uid) {
       console.error('[DataMigrationService] No UID provided for importDataToUser.');
       return false;
@@ -270,14 +318,72 @@ export default class DataMigrationService {
       return false;
     }
     try {
-      importedData.lastUpdated = new Date().toISOString();
-      importedData.importedFromExternalSource = true; // Mark as imported
-      importedData.importDate = new Date().toISOString();
+      // Get existing user data to preserve the other game mode
+      const progressRef = doc(firestore, 'progress', uid);
+      let existingData: UserState = { ...defaultState };
+      
       try {
-        const progressRef = doc(firestore, 'progress', uid);
-        await setDoc(progressRef, importedData as DocumentData, { merge: false });
-        // Also update local storage to reflect the imported data
-        localStorage.setItem(LOCAL_PROGRESS_KEY, JSON.stringify(importedData));
+        const existingDoc = await getDoc(progressRef);
+        if (existingDoc.exists()) {
+          const rawData = existingDoc.data();
+          existingData = migrateToGameModeStructure(rawData);
+        }
+      } catch (getError) {
+        console.warn('[DataMigrationService] Could not get existing data, using defaults:', getError);
+      }
+
+      // Transform the legacy import data to the new UserProgressData format
+      const transformedProgressData: UserProgressData = {
+        level: importedData.level || 1,
+        pmcFaction: (importedData.pmcFaction?.toUpperCase() as 'USEC' | 'BEAR') || 'USEC',
+        displayName: importedData.displayName || null,
+        taskObjectives: this.transformTaskObjectives(importedData.taskObjectives || {}),
+        taskCompletions: importedData.taskCompletions || {},
+        hideoutParts: this.transformHideoutParts(importedData.hideoutParts || {}),
+        hideoutModules: importedData.hideoutModules || {},
+      };
+
+      // Create the new UserState with imported data in PvP mode only
+      const newUserState: UserState = {
+        ...existingData,
+        currentGameMode: 'pvp',
+        gameEdition: typeof importedData.gameEdition === 'string' 
+          ? parseInt(importedData.gameEdition) || 1 
+          : importedData.gameEdition || 1,
+        pvp: transformedProgressData,
+      };
+
+      // Add migration metadata to the PvP game mode data
+      const gameDataWithMetadata: Record<string, unknown> = {
+        ...newUserState.pvp,
+        lastUpdated: new Date().toISOString(),
+        importedFromExternalSource: true,
+        importDate: new Date().toISOString(),
+        importedFromApi: importedData.importedFromApi || false,
+      };
+
+      // Only include optional fields if they have values
+      if (importedData.sourceUserId) {
+        gameDataWithMetadata.sourceUserId = importedData.sourceUserId;
+      }
+      if (importedData.sourceDomain) {
+        gameDataWithMetadata.sourceDomain = importedData.sourceDomain;
+      }
+
+      newUserState.pvp = gameDataWithMetadata as unknown as UserProgressData & {
+        lastUpdated: string;
+        importedFromExternalSource: boolean;
+        importDate: string;
+        importedFromApi?: boolean;
+        sourceUserId?: string;
+        sourceDomain?: string;
+      };
+
+      try {
+        await setDoc(progressRef, newUserState as DocumentData, { merge: true });
+        
+        // Update local storage to reflect the imported data in the new structure
+        localStorage.setItem(LOCAL_PROGRESS_KEY, JSON.stringify(newUserState));
         return true;
       } catch (firestoreError) {
         console.error(
@@ -322,7 +428,6 @@ export default class DataMigrationService {
         console.error(`[DataMigrationService] API token fetch failed: ${response.status}`);
         return null;
       }
-
       // Definition for the raw data structure from the old API
       interface OldApiRawData {
         playerLevel?: number;
@@ -337,10 +442,8 @@ export default class DataMigrationService {
         userId?: string;
         [key: string]: unknown; // For any other properties
       }
-
       const apiJsonResponse = (await response.json()) as unknown;
       let dataFromApi: OldApiRawData;
-
       if (typeof apiJsonResponse === 'object' && apiJsonResponse !== null) {
         if (
           'data' in apiJsonResponse &&
@@ -355,7 +458,6 @@ export default class DataMigrationService {
         console.error('[DataMigrationService] API response is not a valid object.');
         return null;
       }
-
       // Type definitions for the expected array elements from the old API
       interface OldTaskProgress {
         id: string;
@@ -390,7 +492,6 @@ export default class DataMigrationService {
           }
         });
       }
-
       const hideoutModules: ProgressData['hideoutModules'] = {};
       if (Array.isArray(dataFromApi.hideoutModulesProgress)) {
         dataFromApi.hideoutModulesProgress.forEach((module: OldHideoutModuleProgress) => {
@@ -403,7 +504,6 @@ export default class DataMigrationService {
           }
         });
       }
-
       const hideoutParts: ProgressData['hideoutParts'] = {};
       if (Array.isArray(dataFromApi.hideoutPartsProgress)) {
         dataFromApi.hideoutPartsProgress.forEach((part: OldHideoutPartProgress) => {
@@ -415,7 +515,6 @@ export default class DataMigrationService {
           };
         });
       }
-
       const taskObjectives: ProgressData['taskObjectives'] = {};
       if (Array.isArray(dataFromApi.taskObjectivesProgress)) {
         dataFromApi.taskObjectivesProgress.forEach((objective: OldTaskObjectiveProgress) => {
@@ -427,7 +526,6 @@ export default class DataMigrationService {
           };
         });
       }
-
       const migrationData: ProgressData = {
         level: dataFromApi.playerLevel || dataFromApi.level || 1,
         gameEdition: dataFromApi.gameEdition || 'standard',
@@ -442,7 +540,6 @@ export default class DataMigrationService {
         sourceUserId: dataFromApi.userId,
         sourceDomain: oldDomain,
       };
-
       return migrationData;
     } catch (error) {
       console.error('[DataMigrationService] Error fetching data with API token:', error);

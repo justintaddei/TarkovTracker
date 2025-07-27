@@ -33,8 +33,8 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/HideoutList.vue'),
       },
       {
-        name: 'settings',
-        path: '/settings',
+        name: 'api',
+        path: '/api',
         meta: { background: 'gas' },
         component: () => import('@/pages/TrackerSettings.vue'),
       },

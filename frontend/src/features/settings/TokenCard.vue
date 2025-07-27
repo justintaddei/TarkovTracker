@@ -144,7 +144,6 @@
     try {
       await navigator.clipboard.writeText(props.token);
       copied.value = true;
-      // Reset the copied state after 2 seconds
       setTimeout(() => {
         copied.value = false;
       }, 2000);
@@ -170,11 +169,9 @@
   const showQR = ref(false);
   const qrGenerated = ref(false);
   const tokenVisible = ref(false);
-
   const generateQR = () => {
     const canvasId = props.token + '-tc';
     const canvasElement = document.getElementById(canvasId);
-
     if (canvasElement && !qrGenerated.value) {
       QRCode.toCanvas(canvasElement, props.token, {}, function (_error) {
         if (_error) {
@@ -185,7 +182,6 @@
       });
     }
   };
-
   const toggleQR = () => {
     showQR.value = !showQR.value;
     if (showQR.value) {
@@ -195,7 +191,6 @@
       });
     }
   };
-
   const toggleTokenVisibility = () => {
     tokenVisible.value = !tokenVisible.value;
   };
@@ -208,23 +203,18 @@
     border-radius: 4px;
     transition: all 0.2s ease;
     font-family: 'Courier New', monospace;
-
     &:hover {
       background-color: rgba(255, 255, 255, 0.1);
     }
-
     &.token-hidden {
       opacity: 0.7;
-
       &:hover {
         opacity: 1;
       }
     }
-
     &.token-visible {
       background-color: rgba(76, 175, 80, 0.1);
       color: #4caf50;
-
       &:hover {
         background-color: rgba(76, 175, 80, 0.2);
       }

@@ -1,9 +1,21 @@
 <template>
   <v-container>
     <template v-if="userTokenCount == 0">
-      <div style="text-align: left" class="pt-2 px-4">
-        {{ $t('page.settings.card.apitokens.no_tokens') }}
-      </div>
+      <v-card variant="outlined" class="pa-6 text-center ma-2">
+        <v-icon size="64" color="primary" class="mb-4">mdi-key-outline</v-icon>
+        <h3 class="text-h6 mb-2">{{ $t('page.api.tokens.no_tokens_title') }}</h3>
+        <p class="text-body-2 text-medium-emphasis mb-4">
+          {{ $t('page.api.tokens.no_tokens_description') }}
+        </p>
+        <v-btn
+          color="primary"
+          size="large"
+          prepend-icon="mdi-key-plus"
+          @click="showNewTokenForm = true"
+        >
+          {{ $t('page.api.tokens.create_first_token') }}
+        </v-btn>
+      </v-card>
     </template>
     <v-row no-gutters>
       <v-col
@@ -22,44 +34,110 @@
   <v-container v-if="showNewTokenForm">
     <!-- Form to create a user API token -->
     <v-sheet color="secondary_dark" rounded class="pa-4">
+      <div class="d-flex align-center mb-4">
+        <v-icon color="white" class="mr-2">mdi-key-plus</v-icon>
+        <h3 class="text-h6">{{ $t('page.api.tokens.create_new_token') }}</h3>
+      </div>
+      
       <v-form ref="newTokenForm" v-model="validNewToken">
         <v-text-field
           v-model="tokenName"
           :rules="tokenNameRules"
-          label="Token Description (Required)"
+          :label="$t('page.api.tokens.form.description_label')"
+          :placeholder="$t('page.api.tokens.form.description_placeholder')"
           required
           density="compact"
+          variant="outlined"
+          prepend-inner-icon="mdi-tag"
+          counter="20"
+          :error="!!tokenNameError"
+          :error-messages="tokenNameError"
+          :hint="$t('page.api.tokens.form.description_hint')"
+          persistent-hint
+          class="mb-4"
         >
         </v-text-field>
 
-        <v-alert v-if="selectOneError" type="error" density="compact" class="mb-3">
-          Please select at least one permission for this token.
-        </v-alert>
+        <div class="mb-4">
+          <div class="text-subtitle-2 mb-2 d-flex align-center">
+            <v-icon class="mr-2" size="20">mdi-shield-key</v-icon>
+            {{ $t('page.api.tokens.form.permissions_title') }}
+          </div>
+          <div class="text-caption text-medium-emphasis mb-3">
+            {{ $t('page.api.tokens.form.permissions_description') }}
+          </div>
+          
+          <v-alert v-if="selectOneError" type="error" variant="tonal" density="compact" class="mb-3">
+            <template #prepend>
+<v-icon >mdi-alert-circle</v-icon>
+</template>
+            {{ $t('page.api.tokens.form.permissions_error') }}
+          </v-alert>
 
-        <!-- For each available permission flag, display it as a checkbox -->
-        <v-checkbox
-          v-for="(permission, permissionKey) in availablePermissions"
-          :key="permission"
-          v-model="selectedPermissions"
-          :label="permission.title"
-          :value="permissionKey"
-          :error="selectOneError"
-          density="compact"
-          hide-details
-        >
-        </v-checkbox>
+          <v-card variant="outlined" class="pa-3">
+            <v-row>
+              <v-col 
+                v-for="(permission, permissionKey) in availablePermissions"
+                :key="permission"
+                cols="12"
+                md="6"
+              >
+                <v-checkbox
+                  v-model="selectedPermissions"
+                  :label="permission.title"
+                  :value="permissionKey"
+                  :error="selectOneError"
+                  density="compact"
+                  hide-details
+                  class="permission-checkbox"
+                >
+                  <template #label>
+                    <div>
+                      <div class="font-weight-medium">{{ permission.title }}</div>
+                      <div class="text-caption text-medium-emphasis">{{ permission.description || 'Access to ' + permission.title.toLowerCase() }}</div>
+                    </div>
+                  </template>
+                </v-checkbox>
+              </v-col>
+            </v-row>
+          </v-card>
 
-        <div class="d-flex mt-3">
-          <v-btn variant="outlined" class="mr-2" @click="cancelTokenCreation"> Cancel </v-btn>
-          <v-btn
-            :disabled="!canCreateToken"
-            color="success"
-            :loading="creatingToken"
-            append-icon="mdi-key-plus"
-            @click="createToken"
-          >
-            {{ $t('page.settings.card.apitokens.submit_new_token') }}
-          </v-btn>
+          <div v-if="selectedPermissions.length > 0" class="mt-3">
+            <div class="text-caption text-medium-emphasis mb-2">{{ $t('page.api.tokens.form.selected_permissions') }}:</div>
+            <div class="d-flex flex-wrap gap-2">
+              <v-chip
+                v-for="perm in selectedPermissions"
+                :key="perm"
+                color="primary"
+                size="small"
+                variant="tonal"
+              >
+                {{ availablePermissions[perm]?.title || perm }}
+              </v-chip>
+            </div>
+          </div>
+        </div>
+
+        <v-divider class="my-4"></v-divider>
+
+        <div class="d-flex justify-space-between align-center">
+          <div class="text-caption text-medium-emphasis">
+            {{ $t('page.api.tokens.form.active_info') }}
+          </div>
+          <div class="d-flex gap-2">
+            <v-btn variant="outlined" @click="cancelTokenCreation">
+              {{ $t('page.api.tokens.form.cancel') }}
+            </v-btn>
+            <v-btn
+              :disabled="!canCreateToken"
+              color="success"
+              :loading="creatingToken"
+              append-icon="mdi-key-plus"
+              @click="createToken"
+            >
+              {{ $t('page.settings.card.apitokens.submit_new_token') }}
+            </v-btn>
+          </div>
         </div>
       </v-form>
     </v-sheet>
@@ -74,14 +152,20 @@
         prepend-icon="mdi-unfold-more-horizontal"
         @click="showNewTokenForm = true"
       >
-        {{ $t('page.settings.card.apitokens.new_token_expand') }}
+        {{ $t('page.api.tokens.create_token_button') }}
       </v-btn>
     </v-row>
   </v-container>
-  <v-snackbar v-model="newTokenSnackbar" :timeout="4000" color="accent">
-    {{ tokenResult }}
+  <v-snackbar v-model="newTokenSnackbar" :timeout="6000" :color="snackbarColor" location="top">
+    <div class="d-flex align-center">
+      <v-icon :icon="snackbarIcon" class="mr-3"></v-icon>
+      <div>
+        <div class="font-weight-medium">{{ tokenResult }}</div>
+        <div v-if="tokenResultSubtext" class="text-caption opacity-90">{{ tokenResultSubtext }}</div>
+      </div>
+    </div>
     <template #actions>
-      <v-btn color="white" variant="text" @click="newTokenSnackbar = false"> Close </v-btn>
+      <v-btn color="white" variant="text" @click="newTokenSnackbar = false"> {{ $t('page.api.tokens.close') }} </v-btn>
     </template>
   </v-snackbar>
 </template>
@@ -96,7 +180,6 @@
   const { t } = useI18n({ useScope: 'global' });
   const { useSystemStore } = useLiveData();
   const { systemStore } = useSystemStore();
-
   // Use computed properties with direct state access (temporary workaround for getter issue)
   const userTokens = computed(() => {
     return systemStore.$state.tokens || [];
@@ -104,7 +187,6 @@
   const userTokenCount = computed(() => {
     return systemStore.$state.tokens?.length || 0;
   });
-
   // New token form
   const selectOneError = ref(false);
   const newTokenForm = ref(null);
@@ -122,14 +204,16 @@
     );
   });
   const tokenNameRules = ref([
-    (v) => !!v || 'You must enter a token description',
-    (v) => v.length <= 20 || 'Token description must be less than 20 characters',
+    (v) => !!v || t('page.api.tokens.form.validation.required'),
+    (v) => v.length <= 20 || t('page.api.tokens.form.validation.max_length'),
   ]);
   const creatingToken = ref(false);
   const tokenResult = ref(null);
+  const tokenResultSubtext = ref(null);
   const newTokenSnackbar = ref(false);
   const showNewTokenForm = ref(false);
-
+  const snackbarColor = ref('success');
+  const snackbarIcon = ref('mdi-check-circle');
   const cancelTokenCreation = () => {
     showNewTokenForm.value = false;
     newTokenForm.value?.reset();
@@ -162,24 +246,54 @@
         note: tokenName.value,
         permissions: selectedPermissions.value,
       });
-
-      // Note: The Firebase function automatically updates the system document with the new token
-      // The Firebase listener will sync this change to our store automatically
-      // No manual store patching needed
-
       if (!tokenResult.value.data || !tokenResult.value.data.token) {
         console.error('Token not found in response. Expected: tokenResult.value.data.token');
         console.error('Available response data:', Object.keys(tokenResult.value.data || {}));
       }
       cancelTokenCreation();
-      tokenResult.value = t('page.settings.card.apitokens.create_token_success');
+      snackbarColor.value = 'success';
+      snackbarIcon.value = 'mdi-check-circle';
+      tokenResult.value = t('page.api.tokens.success.title');
+      tokenResultSubtext.value = t('page.api.tokens.success.message');
       newTokenSnackbar.value = true;
     } catch (error) {
       console.error('Error creating token:', error);
-      tokenResult.value = t('page.settings.card.apitokens.create_token_error');
+      snackbarColor.value = 'error';
+      snackbarIcon.value = 'mdi-alert-circle';
+      tokenResult.value = t('page.api.tokens.error.title');
+      tokenResultSubtext.value = t('page.api.tokens.error.message');
       newTokenSnackbar.value = true;
     }
     creatingToken.value = false;
   };
 </script>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+  .permission-checkbox {
+    .v-label {
+      opacity: 1 !important;
+    }
+  }
+
+  .gap-2 {
+    gap: 0.5rem;
+  }
+
+  .gap-3 {
+    gap: 0.75rem;
+  }
+
+  @media (max-width: 600px) {
+    .d-flex.justify-space-between {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .d-flex.gap-2 {
+      justify-content: stretch;
+      
+      .v-btn {
+        flex: 1;
+      }
+    }
+  }
+</style>

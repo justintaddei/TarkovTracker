@@ -51,7 +51,6 @@ const demoConfig: FirebaseOptions = {
   appId: '1:123456789:web:demo-app-id',
   measurementId: 'G-DEMO123', // Google Analytics
 };
-
 // Firebase configuration
 const firebaseConfig: FirebaseOptions = isLocalDevelopment
   ? demoConfig
@@ -65,7 +64,6 @@ const firebaseConfig: FirebaseOptions = isLocalDevelopment
       appId: import.meta.env.VITE_FIREBASE_APP_ID,
       measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
     };
-
 // Initialize Firebase services
 const app = initializeApp(firebaseConfig);
 const analytics = import.meta.env.PROD ? getAnalytics(app) : undefined;

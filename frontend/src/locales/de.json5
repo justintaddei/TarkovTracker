@@ -53,6 +53,14 @@
       show_global_tasks: 'Globale Aufgaben anzeigen',
       hide_non_kappa_tasks: 'Nicht-Kappa-Aufgaben ausblenden',
       show_non_kappa_tasks: 'Nicht-Kappa-Aufgaben anzeigen',
+      filters: {
+        title: 'Aufgabenfilter',
+        close: 'Schließen',
+        hide_global_tasks: 'Globale Aufgaben in Kartenansicht ausblenden',
+        show_global_tasks: 'Globale Aufgaben in Kartenansicht anzeigen',
+        hide_non_kappa_tasks: 'Nicht-Kappa-Aufgaben ausblenden',
+        show_non_kappa_tasks: 'Nicht-Kappa-Aufgaben anzeigen',
+      },
       showing_all_sources: 'zeige alle Quellen',
       loading: 'Lade Aufgaben',
       questcard: {
@@ -206,6 +214,62 @@
     },
     login: {
       title: 'Login',
+    },
+    api: {
+      title: 'TarkovTracker API',
+      hero: {
+        description: 'Zugriff auf Ihre Fortschrittsdaten programmatisch mit unserer RESTful API',
+        create_token: 'Token erstellen',
+        documentation: 'API-Dokumentation',
+      },
+      stats: {
+        active_tokens: 'Aktive Token',
+        rest: 'REST',
+        api_type: 'API-Typ',
+        secure: 'Sicher',
+        bearer_auth: 'Bearer-Auth',
+        realtime: 'Echtzeit',
+        data_access: 'Datenzugriff',
+      },
+      chips: {
+        secure_auth: 'Sichere Authentifizierung',
+        secure_tooltip: 'Token verwenden Bearer-Authentifizierung im Authorization-Header',
+        realtime_data: 'Echtzeit-Daten',
+        realtime_tooltip: 'Ihre Fortschrittsdaten sind immer aktuell durch Echtzeit-Synchronisation',
+        json_api: 'JSON API',
+        json_tooltip: 'Alle Antworten sind im JSON-Format mit konsistenter Struktur',
+      },
+      tokens: {
+        no_tokens_title: 'Noch keine API-Token',
+        no_tokens_description: 'Erstellen Sie Ihren ersten Token, um auf die TarkovTracker API zuzugreifen',
+        create_first_token: 'Ersten Token erstellen',
+        create_new_token: 'Neuen API-Token erstellen',
+        create_token_button: 'TOKEN ERSTELLEN',
+        close: 'Schließen',
+        form: {
+          description_label: 'Token-Beschreibung',
+          description_placeholder: 'z.B. Tarkov Monitor, Rat Scanner, etc.',
+          description_hint: 'Wählen Sie einen beschreibenden Namen, um den Zweck dieses Tokens zu identifizieren',
+          permissions_title: 'Token-Berechtigungen',
+          permissions_description: 'Wählen Sie die Mindestberechtigungen für Ihren Anwendungsfall. Sie können jederzeit zusätzliche Token mit anderen Berechtigungen erstellen.',
+          permissions_error: 'Bitte wählen Sie mindestens eine Berechtigung für diesen Token.',
+          selected_permissions: 'Ausgewählte Berechtigungen',
+          active_info: 'Token sind sofort aktiv und können jederzeit widerrufen werden',
+          cancel: 'Abbrechen',
+          validation: {
+            required: 'Sie müssen eine Token-Beschreibung eingeben',
+            max_length: 'Token-Beschreibung muss weniger als 20 Zeichen haben',
+          },
+        },
+        success: {
+          title: 'Token erfolgreich erstellt',
+          message: 'Ihr neuer Token ist jetzt aktiv und einsatzbereit',
+        },
+        error: {
+          title: 'Fehler beim Erstellen des Tokens',
+          message: 'Bitte versuchen Sie es erneut oder wenden Sie sich an den Support, wenn das Problem weiterhin besteht',
+        },
+      },
     },
     not_found: {
       title: 'Seite nicht gefunden',

@@ -15,23 +15,18 @@
     </i18n-t>
   </div>
 </template>
-
 <script setup lang="ts">
   import { useProgressStore } from '@/stores/progress';
   import { useI18n } from 'vue-i18n';
-
   interface UserNeed {
     user: string;
     count: number;
   }
-
   defineProps<{
     teamNeeds: UserNeed[];
     neededCount: number;
   }>();
-
   const { t } = useI18n({ useScope: 'global' });
   const progressStore = useProgressStore();
-
   const getDisplayName = (user: string) => progressStore.getDisplayName(user);
 </script>

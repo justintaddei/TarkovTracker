@@ -37,9 +37,9 @@
     >
     </drawer-item>
     <drawer-item
-      icon="mdi-cog"
-      locale-key="settings"
-      to="/settings"
+      icon="mdi-api"
+      locale-key="api"
+      to="/api"
       :is-collapsed="props.isCollapsed"
     >
     </drawer-item>

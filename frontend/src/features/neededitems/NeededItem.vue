@@ -160,7 +160,6 @@
     }
     const moduleCompletions = progressStore.moduleCompletions?.[need.hideoutModule?.id] || {};
     const modulePartCompletions = progressStore.modulePartCompletions?.[need.id] || {};
-
     // If there is no progress data at all, show the item by default
     if (
       Object.keys(moduleCompletions).length === 0 &&
@@ -168,7 +167,6 @@
     ) {
       return true;
     }
-
     if (userStore.itemsTeamAllHidden || userStore.itemsTeamHideoutHidden) {
       // Only show if the objective is needed by ourself
       return (

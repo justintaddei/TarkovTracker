@@ -371,12 +371,10 @@
     teamNeeds,
     imageItem,
   } = inject('neededitem');
-
   // Intersection observer for lazy loading
   const cardRef = ref(null);
   const isVisible = ref(false);
   let observer = null;
-
   onMounted(() => {
     if (cardRef.value?.$el) {
       observer = new IntersectionObserver(
@@ -394,7 +392,6 @@
       observer.observe(cardRef.value.$el);
     }
   });
-
   onUnmounted(() => {
     observer?.disconnect();
   });

@@ -14,15 +14,12 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
   import { computed, type PropType } from 'vue';
-
   interface ImageItem {
     iconLink?: string;
     backgroundColor: string;
   }
-
   const props = defineProps({
     imageItem: {
       type: Object as PropType<ImageItem>,
@@ -37,9 +34,7 @@
       default: 'medium',
     },
   });
-
   const containerClasses = computed(() => 'd-block');
-
   const imageClasses = computed(() => ({
     [`item-bg-${props.imageItem.backgroundColor}`]: true,
     rounded: true,

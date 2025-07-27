@@ -7,7 +7,27 @@
     <v-card>
       <v-card-title class="text-h5 px-4 py-3">Confirm Data Import</v-card-title>
       <v-card-text class="px-4 pb-4">
-        <p class="mb-5">This will replace your current progress with the imported data:</p>
+        <p class="mb-3">This will import your progress data into your PvP profile:</p>
+        <!-- Game Mode Selection - Fixed to PvP Only -->
+        <v-card variant="flat" class="mb-4 pa-3" color="surface-variant">
+          <div class="d-flex align-center">
+            <v-icon 
+              icon="mdi-sword-cross" 
+              class="mr-2"
+              size="small"
+            />
+            <span class="font-weight-medium">Target Game Mode: PvP</span>
+          </div>
+          <v-alert 
+            type="info" 
+            variant="tonal" 
+            density="compact" 
+            class="mt-3 mb-0"
+          >
+            Data will be imported to your PvP (standard multiplayer) progress
+          </v-alert>
+        </v-card>
+        <p class="mb-4">Data to be imported:</p>
         <DataPreviewCard
           :data="data"
           :completed-tasks="completedTasks"
@@ -36,10 +56,8 @@
     </v-card>
   </v-dialog>
 </template>
-
-<script setup>
+<script setup lang="ts">
   import DataPreviewCard from './DataPreviewCard.vue';
-
   const props = defineProps({
     show: {
       type: Boolean,
@@ -74,7 +92,6 @@
       default: false,
     },
   });
-
   defineEmits([
     'cancel',
     'confirm',

@@ -54,7 +54,6 @@
           </form>
         </v-card-text>
       </v-card>
-
       <ImportConfirmDialog
         v-model:show="migration.confirmDialog.value"
         :data="migration.importedData.value"
@@ -95,7 +94,6 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
-
       <v-dialog v-model="migration.showFailedTaskDetails.value" max-width="500">
         <v-card>
           <v-card-title class="text-h6">Failed Task Details</v-card-title>
@@ -134,12 +132,10 @@
     </template>
   </fitted-card>
 </template>
-
 <script setup>
   import { useDataMigration } from '@/composables/useDataMigration';
   import FittedCard from '@/features/ui/FittedCard.vue';
   import MigrationSteps from './MigrationSteps.vue';
   import ImportConfirmDialog from './ImportConfirmDialog.vue';
-
   const migration = useDataMigration();
 </script>

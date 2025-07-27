@@ -218,6 +218,62 @@
     login: {
       title: 'Увійти',
     },
+    api: {
+      title: 'API TarkovTracker',
+      hero: {
+        description: 'Отримайте доступ до даних про прогрес програмно за допомогою нашого RESTful API',
+        create_token: 'Створити токен',
+        documentation: 'Документація API',
+      },
+      stats: {
+        active_tokens: 'Активні токени',
+        rest: 'REST',
+        api_type: 'Тип API',
+        secure: 'Безпечний',
+        bearer_auth: 'Bearer Auth',
+        realtime: 'Реальний час',
+        data_access: 'Доступ до даних',
+      },
+      chips: {
+        secure_auth: 'Безпечна автентифікація',
+        secure_tooltip: 'Токени використовують Bearer автентифікацію в заголовку Authorization',
+        realtime_data: 'Дані в реальному часі',
+        realtime_tooltip: 'Ваші дані про прогрес завжди актуальні завдяки синхронізації в реальному часі',
+        json_api: 'JSON API',
+        json_tooltip: 'Усі відповіді в форматі JSON з послідовною структурою',
+      },
+      tokens: {
+        no_tokens_title: 'Поки немає API токенів',
+        no_tokens_description: 'Створіть свій перший токен, щоб почати доступ до API TarkovTracker',
+        create_first_token: 'Створити перший токен',
+        create_new_token: 'Створити новий API токен',
+        create_token_button: 'СТВОРИТИ ТОКЕН',
+        close: 'Закрити',
+        form: {
+          description_label: 'Опис токена',
+          description_placeholder: 'наприклад: Tarkov Monitor, Rat Scanner тощо',
+          description_hint: 'Виберіть описову назву для ідентифікації призначення цього токена',
+          permissions_title: 'Дозволи токена',
+          permissions_description: 'Виберіть мінімальні дозволи, необхідні для вашого випадку використання. Ви завжди можете створити додаткові токени з різними дозволами.',
+          permissions_error: 'Будь ласка, виберіть хоча б один дозвіл для цього токена.',
+          selected_permissions: 'Вибрані дозволи',
+          active_info: 'Токени відразу активні і можуть бути відкликані в будь-який час',
+          cancel: 'Скасувати',
+          validation: {
+            required: 'Ви повинні ввести опис токена',
+            max_length: 'Опис токена повинен містити менше 20 символів',
+          },
+        },
+        success: {
+          title: 'Токен успішно створено',
+          message: 'Ваш новий токен тепер активний і готовий до використання',
+        },
+        error: {
+          title: 'Помилка створення токена',
+          message: 'Будь ласка, спробуйте знову або зверніться до підтримки, якщо проблема не зникне',
+        },
+      },
+    },
     not_found: {
       title: 'Сторінка не знайдена',
       not_found_description: 'Вибачте, ця сторінка не може бути знайдена!',

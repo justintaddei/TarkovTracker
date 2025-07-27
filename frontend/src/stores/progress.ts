@@ -7,7 +7,7 @@ import { useTeammateStores } from './useTeamStore';
 import type { Task } from '@/composables/tarkovdata';
 import { tasks, traders, objectives, hideoutStations } from '@/composables/tarkovdata';
 import type { Store } from 'pinia';
-import type { UserState } from '@/shared_state';
+import type { UserState, UserProgressData } from '@/shared_state';
 export const STASH_STATION_ID = '5d484fc0654e76006657e0ab';
 export const CULTIST_CIRCLE_STATION_ID = '667298e75ea6b4493c08f266';
 interface GameEdition {
@@ -242,7 +242,7 @@ export const useProgressStore = defineStore(
           }
           let currentStationDisplayLevel;
           if (station.id === STASH_STATION_ID) {
-            const gameEditionVersion = currentData?.gameEdition ?? 0;
+            const gameEditionVersion = store?.$state.gameEdition ?? 0;
             const edition = gameEditionData.value.find(
               (e: GameEdition) => e.version === gameEditionVersion
             );
@@ -255,7 +255,7 @@ export const useProgressStore = defineStore(
               currentStationDisplayLevel = Math.max(effectiveStashLevel, maxManuallyCompletedLevel);
             }
           } else if (station.id === CULTIST_CIRCLE_STATION_ID) {
-            const gameEditionVersion = currentData?.gameEdition ?? 0;
+            const gameEditionVersion = store?.$state.gameEdition ?? 0;
             if (
               (gameEditionVersion === 5 || gameEditionVersion === 6) &&
               station.levels &&

@@ -16,20 +16,17 @@
     </div>
   </div>
 </template>
-
 <style scoped>
   .migration-steps {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
-
   .step-item {
     display: flex;
     align-items: flex-start;
     gap: 12px;
   }
-
   .step-number {
     display: flex;
     align-items: center;
@@ -42,17 +39,14 @@
     font-size: 14px;
     font-weight: bold;
   }
-
   .step-text {
     padding-top: 2px;
     text-align: left;
   }
-
   .info-link {
     color: rgba(var(--v-theme-link), 1);
     text-decoration: none;
   }
-
   .info-link:hover {
     text-decoration: underline;
   }

@@ -101,11 +101,9 @@
     </v-row>
   </div>
 </template>
-
 <script setup>
   import { computed } from 'vue';
   import { getEditionName } from '@/utils/gameEditions';
-
   const props = defineProps({
     data: {
       type: Object,
@@ -132,8 +130,6 @@
       default: 0,
     },
   });
-
   defineEmits(['show-objectives-details', 'show-failed-tasks-details']);
-
   const editionName = computed(() => getEditionName(props.data?.gameEdition));
 </script>

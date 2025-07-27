@@ -16,6 +16,7 @@ export function useDataMigration() {
   const fetchingApi = ref(false);
   const apiFetchSuccess = ref(false);
   const showToken = ref(false);
+  
 
   // Import state
   const importing = ref(false);
@@ -115,7 +116,8 @@ export function useDataMigration() {
     try {
       const result = await DataMigrationService.importDataToUser(
         fireuser.uid!,
-        importedData.value!
+        importedData.value!,
+        'pvp' // Force PvP mode only
       );
       if (result) {
         importSuccess.value = true;
