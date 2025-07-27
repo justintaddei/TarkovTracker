@@ -6,7 +6,7 @@ A Firebase Cloud Functions backend providing secure API access for the TarkovTra
 
 The backend follows a clean service-oriented architecture with clear separation of concerns:
 
-```
+```bash
 src/
 ├── handlers/           # Express route handlers (thin layer)
 │   ├── progressHandler.ts    # Player progress operations
@@ -81,7 +81,7 @@ npm run deploy:dev    # Deploy to development
 
 All API endpoints require Bearer token authentication via the `Authorization` header:
 
-```
+```md
 Authorization: Bearer <your-api-token>
 ```
 

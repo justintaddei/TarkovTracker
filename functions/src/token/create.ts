@@ -136,4 +136,8 @@ async function _createTokenLogic(
     }
   }
 }
-export const createToken = onCall({ cors: true }, _createTokenLogic);
+export const createToken = onCall({
+  cors: true,
+  memory: '128MiB',
+  timeoutSeconds: 20,
+}, _createTokenLogic);

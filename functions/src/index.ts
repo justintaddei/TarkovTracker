@@ -5,6 +5,8 @@ import {
   HttpsError,
   CallableRequest,
   Request as FirebaseRequest,
+  onCall,
+  onRequest,
 } from 'firebase-functions/v2/https';
 import { request, gql } from 'graphql-request';
 import UIDGenerator from 'uid-generator';
@@ -17,7 +19,6 @@ import {
   FieldValue,
 } from 'firebase-admin/firestore';
 import cors from 'cors';
-import * as functions from 'firebase-functions';
 import express, { Express, Request, Response, NextFunction } from 'express';
 import bodyParser from 'body-parser';
 
@@ -32,7 +33,6 @@ import tokenHandler from './handlers/tokenHandler.js';
 import { createToken } from './token/create.js';
 import { revokeToken } from './token/revoke.js';
 
-import { getDeploymentConfig } from './deploy-config.js';
 admin.initializeApp();
 export { createToken, revokeToken };
 // Interfaces used by the application (commented to avoid unused warnings)
@@ -50,40 +50,27 @@ export { createToken, revokeToken };
 //   username?: string;
 //   roles?: string[];
 // }
-// Get deployment configuration
-const config = getDeploymentConfig();
 
 const app: Express = express();
 
-// Request logging middleware
-app.use((req: Request, res: Response, next: NextFunction) => {
-  const logData = {
-    method: req.method,
-    url: req.originalUrl,
-    userAgent: req.headers['user-agent'],
-    ip: req.ip,
-  };
-  
-  if (config.enableDetailedLogging) {
-    logger.log(`API Request: ${req.method} ${req.originalUrl}`, logData);
-  } else {
-    logger.log(`API Request: ${req.method} ${req.originalUrl}`);
-  }
-  next();
-});
-
-// CORS configuration
+// Simplified CORS for production efficiency
 app.use(cors({
   origin: true,
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
-// Parse request bodies
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+// Lightweight body parsing - reduce limits for faster processing
+app.use(bodyParser.json({ limit: '1mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
+
+// Conditional request logging (only in dev)
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req: Request, _res: Response, next: NextFunction) => {
+    logger.log(`API Request: ${req.method} ${req.originalUrl}`);
+    next();
+  });
+}
 
 // Apply new authentication middleware to API routes
 app.use('/api', verifyBearer);
@@ -99,17 +86,17 @@ app.post('/api/progress/tasks', progressHandler.updateMultipleTasks);
 app.post('/api/progress/task/objective/:objectiveId', progressHandler.updateTaskObjective);
 
 // Team routes with CORS options
-app.options('/api/team/create', (req: Request, res: Response) => {
+app.options('/api/team/create', (_req: Request, res: Response) => {
   res.status(200).send();
 });
 app.post('/api/team/create', teamHandler.createTeam);
 
-app.options('/api/team/join', (req: Request, res: Response) => {
+app.options('/api/team/join', (_req: Request, res: Response) => {
   res.status(200).send();
 });
 app.post('/api/team/join', teamHandler.joinTeam);
 
-app.options('/api/team/leave', (req: Request, res: Response) => {
+app.options('/api/team/leave', (_req: Request, res: Response) => {
   res.status(200).send();
 });
 app.post('/api/team/leave', teamHandler.leaveTeam);
@@ -124,7 +111,7 @@ app.post('/api/v2/progress/tasks', progressHandler.updateMultipleTasks);
 app.post('/api/v2/progress/task/objective/:objectiveId', progressHandler.updateTaskObjective);
 
 // ===== HEALTH CHECK ROUTE =====
-app.get('/health', asyncHandler(async (req: Request, res: Response) => {
+app.get('/health', asyncHandler(async (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     data: {
@@ -133,10 +120,10 @@ app.get('/health', asyncHandler(async (req: Request, res: Response) => {
       version: '2.0.0',
       service: 'tarkovtracker-api',
       features: {
-        newErrorHandling: config.useNewErrorHandling,
-        newProgressService: config.useNewProgressService,
-        newTeamService: config.useNewTeamService,
-        newTokenService: config.useNewTokenService,
+        newErrorHandling: true,
+        newProgressService: true,
+        newTeamService: true,
+        newTokenService: true,
       },
     },
   });
@@ -149,7 +136,15 @@ app.use(notFoundHandler);
 // Centralized error handler (must be last)
 app.use(errorHandler);
 
-export const api = functions.https.onRequest(app);
+export const api = onRequest(
+  {
+    memory: '128MiB',
+    timeoutSeconds: 30,
+    minInstances: 0,
+    maxInstances: 3,
+  },
+  app
+);
 interface SystemDocData {
   team?: string | null;
   teamMax?: number;
@@ -439,10 +434,21 @@ async function _kickTeamMemberLogic(
     handleTeamError('kick team member', e, { owner: userUid, kicked: data.kicked });
   }
 }
-export const createTeam = functions.https.onCall(_createTeamLogic);
+export const createTeam = onCall(
+  {
+    memory: '128MiB',
+    timeoutSeconds: 20,
+  },
+  _createTeamLogic
+);
 
 // Alternative HTTPS endpoint for createTeam with explicit CORS handling
-export const createTeamHttp = functions.https.onRequest(async (req, res) => {
+export const createTeamHttp = onRequest(
+  {
+    memory: '128MiB',
+    timeoutSeconds: 20,
+  },
+  async (req: FirebaseRequest, res: Response) => {
   // Set CORS headers
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -493,9 +499,29 @@ export const createTeamHttp = functions.https.onRequest(async (req, res) => {
     }
   }
 });
-export const joinTeam = functions.https.onCall(_joinTeamLogic);
-export const leaveTeam = functions.https.onCall(_leaveTeamLogic);
-export const kickTeamMember = functions.https.onCall(_kickTeamMemberLogic);
+export const joinTeam = onCall(
+  {
+    memory: '128MiB',
+    timeoutSeconds: 20,
+  },
+  _joinTeamLogic
+);
+
+export const leaveTeam = onCall(
+  {
+    memory: '128MiB',
+    timeoutSeconds: 20,
+  },
+  _leaveTeamLogic
+);
+
+export const kickTeamMember = onCall(
+  {
+    memory: '128MiB',
+    timeoutSeconds: 20,
+  },
+  _kickTeamMemberLogic
+);
 interface TarkovItem {
   id: string;
   name?: string;

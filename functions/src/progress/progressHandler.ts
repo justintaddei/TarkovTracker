@@ -2,13 +2,10 @@ import functions from 'firebase-functions';
 import admin from 'firebase-admin';
 import { Request, Response } from 'express';
 import { Firestore, DocumentReference, DocumentSnapshot } from 'firebase-admin/firestore';
-
 // Import from TypeScript files with .js extension for module resolution
 import { getTaskData, getHideoutData } from '../utils/dataLoaders.js';
 import { formatProgress, updateTaskState } from './progressUtils.js';
-
 // --- Interfaces for Data Structures ---
-
 // Assume structure returned by utils (replace with actual types when utils are converted)
 interface TaskData {
   [key: string]: unknown;
@@ -16,7 +13,6 @@ interface TaskData {
 interface HideoutData {
   [key: string]: unknown;
 }
-
 // Define FormattedProgress strictly based on formatProgress function output
 interface FormattedProgress {
   tasksProgress: ObjectiveItem[];
@@ -29,7 +25,6 @@ interface FormattedProgress {
   gameEdition: number;
   pmcFaction: string;
 }
-
 // Basic Objective/Progress Item Structure used in FormattedProgress
 interface ObjectiveItem {
   id: string;
@@ -38,7 +33,6 @@ interface ObjectiveItem {
   invalid?: boolean;
   failed?: boolean;
 }
-
 // Firestore Document Data Interfaces (Legacy Format)
 interface ProgressDocData {
   // Define fields based on actual progress document structure (legacy format)
@@ -51,40 +45,32 @@ interface ProgressDocData {
   hideoutParts?: { [partId: string]: HideoutPartData };
   hideoutModules?: { [moduleId: string]: HideoutModuleData };
 }
-
 interface TaskCompletionData {
   complete?: boolean;
   failed?: boolean;
   timestamp?: number;
 }
-
 interface TaskObjectiveData {
   complete?: boolean;
   count?: number;
   timestamp?: number;
 }
-
 interface HideoutPartData {
   complete?: boolean;
   count?: number;
 }
-
 interface HideoutModuleData {
   complete?: boolean;
 }
-
 interface SystemDocData {
   team?: string | null;
 }
-
 interface UserDocData {
   teamHide?: { [teammateId: string]: boolean };
 }
-
 interface TeamDocData {
   members?: string[];
 }
-
 // Custom Request Interface (matching auth.ts/index.ts)
 interface ApiTokenData {
   owner: string;
@@ -93,15 +79,12 @@ interface ApiTokenData {
   calls?: number;
   createdAt?: admin.firestore.Timestamp;
 }
-
 interface ApiToken extends ApiTokenData {
   token: string;
 }
-
 interface AuthenticatedRequest extends Request {
   apiToken?: ApiToken;
 }
-
 // --- Helper Type Check Functions ---
 function isValidTaskStatus(status: unknown): status is string {
   return (
@@ -109,9 +92,7 @@ function isValidTaskStatus(status: unknown): status is string {
     (status === 'uncompleted' || status === 'completed' || status === 'failed')
   );
 }
-
 // --- Handler Functions ---
-
 /**
  * @openapi
  * /progress:
@@ -196,7 +177,6 @@ const getPlayerProgress = async (req: AuthenticatedRequest, res: Response): Prom
     res.status(401).send({ error: 'Unauthorized or insufficient permissions.' });
   }
 };
-
 /**
  * @openapi
  * /team/progress:
@@ -321,7 +301,6 @@ const getTeamProgress = async (req: AuthenticatedRequest, res: Response): Promis
     res.status(401).send({ error: 'Unauthorized or insufficient permissions.' });
   }
 };
-
 /**
  * @openapi
  * /progress/level/{levelValue}:
@@ -376,7 +355,6 @@ const setPlayerLevel = async (req: AuthenticatedRequest, res: Response): Promise
     res.status(401).send({ error: 'Unauthorized or insufficient permissions.' });
   }
 };
-
 /**
  * @openapi
  * /progress/task/{taskId}:
@@ -427,7 +405,6 @@ const updateSingleTask = async (req: AuthenticatedRequest, res: Response): Promi
       .doc(ownerId) as DocumentReference<ProgressDocData>;
     const taskId: string = req.params.taskId;
     const state = req.body.state;
-
     if (!taskId) {
       res.status(400).send({ error: 'Task ID is required.' });
       return;
@@ -443,7 +420,6 @@ const updateSingleTask = async (req: AuthenticatedRequest, res: Response): Promi
       // Use legacy format for compatibility
       const updateTime = Date.now();
       const updateData: { [key: string]: boolean | number | admin.firestore.FieldValue } = {};
-
       // Update task completion status using legacy format
       if (state === 'completed') {
         updateData[`taskCompletions.${taskId}.complete`] = true;
@@ -459,9 +435,7 @@ const updateSingleTask = async (req: AuthenticatedRequest, res: Response): Promi
         // Use FieldValue.delete() for timestamp removal
         updateData[`taskCompletions.${taskId}.timestamp`] = admin.firestore.FieldValue.delete();
       }
-
       await progressRef.update(updateData);
-
       // Implement task dependency updates using updateTaskState
       try {
         const taskData = await getTaskData();
@@ -490,7 +464,6 @@ const updateSingleTask = async (req: AuthenticatedRequest, res: Response): Promi
     res.status(401).send({ error: 'Unauthorized or insufficient permissions.' });
   }
 };
-
 /**
  * @openapi
  * /progress/tasks:
@@ -543,7 +516,6 @@ const updateMultipleTasks = async (req: AuthenticatedRequest, res: Response): Pr
     try {
       const updateTime = Date.now();
       const batchUpdateData: { [key: string]: boolean | number | admin.firestore.FieldValue } = {};
-
       // Process each task update
       for (const taskId in taskUpdates) {
         if (Object.prototype.hasOwnProperty.call(taskUpdates, taskId)) {
@@ -557,7 +529,6 @@ const updateMultipleTasks = async (req: AuthenticatedRequest, res: Response): Pr
             });
             break;
           }
-
           // Update task completion status using legacy format
           if (status === 'completed') {
             batchUpdateData[`taskCompletions.${taskId}.complete`] = true;
@@ -573,7 +544,6 @@ const updateMultipleTasks = async (req: AuthenticatedRequest, res: Response): Pr
             batchUpdateData[`taskCompletions.${taskId}.timestamp`] =
               admin.firestore.FieldValue.delete();
           }
-
           // Collect task updates for dependency checks
           updatePromises.push(
             (async () => {
@@ -592,15 +562,12 @@ const updateMultipleTasks = async (req: AuthenticatedRequest, res: Response): Pr
           );
         }
       }
-
       if (invalidStatusFound) {
         res.status(400).send({ error: 'Invalid status value found in batch update.' });
         return;
       }
-
       // Commit all updates in a single batch
       await progressRef.update(batchUpdateData);
-
       // Process task dependency updates
       await Promise.all(updatePromises);
       res.status(200).send({ message: 'Tasks updated successfully.' });
@@ -615,7 +582,6 @@ const updateMultipleTasks = async (req: AuthenticatedRequest, res: Response): Pr
     res.status(401).send({ error: 'Unauthorized or insufficient permissions.' });
   }
 };
-
 /**
  * @openapi
  * /progress/task/objective/{objectiveId}:
@@ -670,21 +636,17 @@ const updateTaskObjective = async (req: AuthenticatedRequest, res: Response): Pr
       .doc(ownerId) as DocumentReference<ProgressDocData>;
     const objectiveId: string = req.params.objectiveId;
     const { state, count } = req.body;
-
     if (!objectiveId) {
       res.status(400).send({ error: 'Objective ID is required.' });
       return;
     }
-
     if (!state && count == null) {
       res.status(400).send({ error: 'Either state or count must be provided.' });
       return;
     }
-
     try {
       const updateTime = Date.now();
       const updateData: { [key: string]: boolean | number | admin.firestore.FieldValue } = {};
-
       // Update objective using legacy format
       if (state) {
         if (state === 'completed') {
@@ -699,7 +661,6 @@ const updateTaskObjective = async (req: AuthenticatedRequest, res: Response): Pr
           return;
         }
       }
-
       if (count != null) {
         if (typeof count !== 'number' || count < 0) {
           res.status(400).send({ error: 'Count must be a non-negative number.' });
@@ -707,7 +668,6 @@ const updateTaskObjective = async (req: AuthenticatedRequest, res: Response): Pr
         }
         updateData[`taskObjectives.${objectiveId}.count`] = count;
       }
-
       await progressRef.update(updateData);
       res.status(200).send({ message: 'Task objective updated successfully.' });
     } catch (error: unknown) {
@@ -724,7 +684,6 @@ const updateTaskObjective = async (req: AuthenticatedRequest, res: Response): Pr
     res.status(401).send({ error: 'Unauthorized or insufficient permissions.' });
   }
 };
-
 export default {
   getPlayerProgress,
   getTeamProgress,

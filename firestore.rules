@@ -19,11 +19,19 @@ service cloud.firestore {
     }
     
     function validUserData(){
-      return request.resource.data.keys().hasAll(['level', 'gameEdition', 'pmcFaction']) &&
-             request.resource.data.level is number &&
-             request.resource.data.gameEdition is number &&
-             request.resource.data.gameEdition >= 1 && request.resource.data.gameEdition <= 6 &&
-             request.resource.data.pmcFaction in ['USEC', 'BEAR'];
+      // Validate the new game mode structure
+      return request.resource.data.keys().hasAll(['currentGameMode', 'pvp', 'pve']) &&
+             request.resource.data.currentGameMode in ['pvp', 'pve'] &&
+             validGameModeData(request.resource.data.pvp) &&
+             validGameModeData(request.resource.data.pve);
+    }
+    
+    function validGameModeData(gameModeData){
+      return gameModeData.keys().hasAll(['level', 'gameEdition', 'pmcFaction']) &&
+             gameModeData.level is number &&
+             gameModeData.gameEdition is number &&
+             gameModeData.gameEdition >= 1 && gameModeData.gameEdition <= 6 &&
+             gameModeData.pmcFaction in ['USEC', 'BEAR'];
     }
     
     // System collection - user metadata including team membership and tokens

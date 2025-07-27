@@ -1,5 +1,5 @@
-import * as logger from 'firebase-functions/logger'; // Import v2 logger
-import * as functions from 'firebase-functions'; // Import v1 functions for onRequest
+import { logger } from 'firebase-functions/v2';
+import { onRequest, Request, Response } from 'firebase-functions/v2/https';
 import admin from 'firebase-admin';
 import cors from 'cors';
 import {
@@ -8,7 +8,7 @@ import {
   DocumentSnapshot,
   Transaction,
 } from 'firebase-admin/firestore';
-import { HttpsError, FunctionsErrorCode } from 'firebase-functions/v2/https'; // Keep HttpsError for internal logic
+import { HttpsError, FunctionsErrorCode } from 'firebase-functions/v2/https';
 // Define interfaces for data structures
 interface RevokeTokenData {
   token: string;
@@ -151,8 +151,14 @@ async function _revokeTokenLogic(
     }
   }
 }
+
 const corsHandler = cors({ origin: true }); // Allow all origins, or configure as needed
-export const revokeToken = functions.https.onRequest((req, res) => {
+export const revokeToken = onRequest(
+  {
+    memory: '128MiB',
+    timeoutSeconds: 20,
+  },
+  (req: Request, res: Response) => {
   corsHandler(req, res, async () => {
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method Not Allowed' });

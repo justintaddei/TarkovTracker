@@ -235,7 +235,6 @@ const _processHideoutStations = (
     });
   };
   try {
-    // Stash processing
     const stashStation = hideoutData.hideoutStations.find(
       (station) => station.id === STASH_STATION_ID
     );
@@ -332,21 +331,34 @@ const _invalidateTasks = (
     });
   }
 };
+// Type for potential progress data structures
+interface ProgressDataStructure {
+  currentGameMode?: string;
+  pvp?: UserProgressData;
+  pve?: UserProgressData;
+  [key: string]: unknown;
+}
 // Helper function to extract gamemode-specific data
 const extractGameModeData = (
   progressData: unknown,
   gameMode: string = 'pvp'
 ): UserProgressData | null => {
   if (!progressData) return null;
-  
-  // If the document has gamemode-specific data structure
-  if (progressData.currentGameMode && (progressData.pvp || progressData.pve)) {
-    const currentMode = gameMode || progressData.currentGameMode || 'pvp';
-    return progressData[currentMode] || null;
+  // Type guard for gamemode-specific data structure
+  const data = progressData as ProgressDataStructure;
+  if (data?.currentGameMode && (data?.pvp || data?.pve)) {
+    const currentMode = gameMode || data.currentGameMode || 'pvp';
+    return (data[currentMode] as UserProgressData) || null;
   }
-  
-  // Legacy format - return the data as-is
-  return progressData;
+  // Check if this is partial migration case (has currentGameMode but no pvp/pve structure)
+  if (data?.currentGameMode && !data?.pvp && !data?.pve) {
+    // This is partially migrated - extract the legacy data (minus currentGameMode)
+    const legacyData = { ...data };
+    delete legacyData.currentGameMode;
+    return legacyData as UserProgressData;
+  }
+  // Legacy format - return the data as-is (this handles imported data that hasn't been migrated yet)
+  return progressData as UserProgressData;
 };
 
 const formatProgress = (
@@ -358,7 +370,6 @@ const formatProgress = (
 ): FormattedProgress => {
   // Extract gamemode-specific data
   const gameModeData = extractGameModeData(progressData, gameMode);
-  
   const baseProgress = _initializeBaseProgress(gameModeData, userId);
   const progress: FormattedProgress = {
     ...baseProgress,
@@ -454,10 +465,8 @@ const updateTaskState = async (
   const progressRef: DocumentReference = db.collection('progress').doc(userId);
   const updateTime = Date.now();
   const progressUpdate: ProgressUpdate = {};
-
   const changedTask = taskData.tasks.find((t) => t.id === taskId);
   if (!changedTask) return;
-
   // --- Update tasks that REQUIRE the changed task ---
   await _updateDependentTasks(
     taskId,
@@ -468,10 +477,8 @@ const updateTaskState = async (
     progressUpdate,
     updateTime
   );
-
   // --- Update ALTERNATIVE tasks OF the changed task ---
   _updateAlternativeTasks(changedTask, newState, progressUpdate, updateTime);
-
   // Commit any collected updates
   if (Object.keys(progressUpdate).length > 0) {
     try {
@@ -492,7 +499,6 @@ const updateTaskState = async (
     }
   }
 };
-
 /**
  * Checks if all requirements for a task are met, considering current progress
  */
@@ -509,17 +515,17 @@ const checkAllRequirementsMet = async (
     const progressData = progressDoc.data() || {};
     const taskCompletions = progressData.taskCompletions || {};
     // Check if ALL requirements for this dependent task are satisfied
-    const allReqsMet = dependentTask.taskRequirements?.every((innerReq) => {
+    const allRequirementsMet = dependentTask.taskRequirements?.every((innerReq) => {
       if (!innerReq.task?.id) return true; // Skip if requirement has no task id
       const reqTaskId = innerReq.task.id;
-      const reqStatus = innerReq.status || [];
+      const requirementStatus = innerReq.status || [];
       // If this is the task that just changed status
       if (reqTaskId === changedTaskId) {
         // Check if the new state satisfies the requirement
-        if (reqStatus.includes('complete') && newState === 'completed') return true;
-        if (reqStatus.includes('failed') && newState === 'failed') return true;
+        if (requirementStatus.includes('complete') && newState === 'completed') return true;
+        if (requirementStatus.includes('failed') && newState === 'failed') return true;
         if (
-          reqStatus.includes('active') &&
+          requirementStatus.includes('active') &&
           (newState === 'uncompleted' || newState === 'completed')
         )
           return true;
@@ -527,21 +533,21 @@ const checkAllRequirementsMet = async (
       }
       // For other task requirements, check if they're satisfied based on current progress (legacy format)
       const otherTaskData = taskCompletions[reqTaskId];
-      if (reqStatus.includes('complete') && otherTaskData?.complete && !otherTaskData?.failed) {
+      if (requirementStatus.includes('complete') && otherTaskData?.complete && !otherTaskData?.failed) {
         return true; // Requirement needs completion and task is complete
       }
       if (
-        reqStatus.includes('active') &&
+        requirementStatus.includes('active') &&
         (otherTaskData?.complete === false || (otherTaskData?.complete && !otherTaskData?.failed))
       ) {
         return true; // Requirement needs activation and task is active or complete
       }
-      if (reqStatus.includes('failed') && otherTaskData?.failed) {
+      if (requirementStatus.includes('failed') && otherTaskData?.failed) {
         return true; // Requirement needs failure and task is failed
       }
       return false; // Requirement not met
     });
-    if (allReqsMet) {
+    if (allRequirementsMet) {
       functions.logger.log('All requirements met for task unlocking', {
         userId,
         taskId: dependentTask.id,
@@ -560,5 +566,4 @@ const checkAllRequirementsMet = async (
     return true;
   }
 };
-
 export { formatProgress, invalidateTaskRecursive, updateTaskState };
