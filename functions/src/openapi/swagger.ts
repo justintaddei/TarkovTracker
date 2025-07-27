@@ -36,11 +36,11 @@ const swaggerOptions: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'https://tarkovtracker.org',
+        url: 'https://tarkovtracker.org/api/v2',
         description: 'TarkovTracker API v2 PROD endpoint',
       },
       {
-        url: 'https://tarkov-tracker-dev.web.app',
+        url: 'https://tarkov-tracker-dev.web.app/api/v2',
         description: 'TarkovTracker API v2 DEV endpoint',
       },
     ],

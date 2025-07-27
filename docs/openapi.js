@@ -15,11 +15,11 @@ window.openapi = {
   },
   "servers": [
     {
-      "url": "https://tarkovtracker.org",
+      "url": "https://tarkovtracker.org/api/v2",
       "description": "TarkovTracker API v2 PROD endpoint"
     },
     {
-      "url": "https://tarkov-tracker-dev.web.app",
+      "url": "https://tarkov-tracker-dev.web.app/api/v2",
       "description": "TarkovTracker API v2 DEV endpoint"
     }
   ],
@@ -211,7 +211,7 @@ window.openapi = {
     }
   ],
   "paths": {
-    "/api/progress": {
+    "/progress": {
       "get": {
         "summary": "Returns progress data of the player",
         "tags": [
@@ -275,7 +275,7 @@ window.openapi = {
         }
       }
     },
-    "/api/progress/level/{levelValue}": {
+    "/progress/level/{levelValue}": {
       "post": {
         "summary": "Sets player's level to value specified in the path",
         "tags": [
@@ -352,7 +352,7 @@ window.openapi = {
         }
       }
     },
-    "/api/progress/task/{taskId}": {
+    "/progress/task/{taskId}": {
       "post": {
         "summary": "Update the progress state of a single task.",
         "tags": [
@@ -456,7 +456,7 @@ window.openapi = {
         }
       }
     },
-    "/api/progress/tasks": {
+    "/progress/tasks": {
       "post": {
         "summary": "Updates status for multiple tasks",
         "tags": [
@@ -489,18 +489,19 @@ window.openapi = {
             "application/json": {
               "schema": {
                 "type": "object",
-                "description": "Object where keys are task IDs and values are the new status",
+                "description": "Object where keys are task IDs and values are the new status (0-3)",
                 "additionalProperties": {
-                  "type": "string",
+                  "type": "integer",
                   "enum": [
-                    "uncompleted",
-                    "completed",
-                    "failed"
+                    0,
+                    1,
+                    2,
+                    3
                   ]
                 },
                 "example": {
-                  "task1": "completed",
-                  "task5": "uncompleted"
+                  "task1": 2,
+                  "task5": 1
                 }
               }
             }
@@ -548,7 +549,7 @@ window.openapi = {
         }
       }
     },
-    "/api/progress/task/objective/{objectiveId}": {
+    "/progress/task/objective/{objectiveId}": {
       "post": {
         "summary": "Update objective progress for a task.",
         "tags": [
@@ -660,11 +661,11 @@ window.openapi = {
         }
       }
     },
-    "/api/team/progress": {
+    "/team/progress": {
       "get": {
         "summary": "Returns progress data of all members of the team",
         "tags": [
-          "Team"
+          "Progress"
         ],
         "security": [
           {
@@ -702,7 +703,8 @@ window.openapi = {
                         }
                       }
                     }
-                  }
+                  },
+                  "$ref": "#/components/schemas/TeamProgress"
                 }
               }
             }
@@ -716,7 +718,7 @@ window.openapi = {
         }
       }
     },
-    "/api/team/create": {
+    "/team/create": {
       "post": {
         "summary": "Creates a new team",
         "tags": [
@@ -791,7 +793,7 @@ window.openapi = {
         }
       }
     },
-    "/api/team/join": {
+    "/team/join": {
       "post": {
         "summary": "Join an existing team",
         "tags": [
@@ -871,7 +873,7 @@ window.openapi = {
         }
       }
     },
-    "/api/team/leave": {
+    "/team/leave": {
       "post": {
         "summary": "Leave current team",
         "tags": [
@@ -915,7 +917,7 @@ window.openapi = {
         }
       }
     },
-    "/api/token": {
+    "/token": {
       "get": {
         "summary": "Returns data associated with the Token given in the Authorization header of the request",
         "tags": [
@@ -964,337 +966,7 @@ window.openapi = {
                           "description": "Number of API calls made with this token."
                         }
                       }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized. Invalid or missing token."
-          },
-          "500": {
-            "description": "Internal server error."
-          }
-        }
-      }
-    },
-    "/progress": {
-      "get": {
-        "summary": "Returns progress data of the player",
-        "tags": [
-          "Progress"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Player progress retrieved successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "$ref": "#/components/schemas/Progress"
                     },
-                    "meta": {
-                      "type": "object",
-                      "properties": {
-                        "self": {
-                          "type": "string",
-                          "description": "The user ID of the requester."
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized. Invalid token or missing 'GP' permission."
-          },
-          "500": {
-            "description": "Internal server error."
-          }
-        }
-      }
-    },
-    "/team/progress": {
-      "get": {
-        "summary": "Returns progress data of all members of the team",
-        "tags": [
-          "Progress"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Team progress retrieved successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamProgress"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized. Invalid token or missing 'TP' permission."
-          },
-          "500": {
-            "description": "Internal server error."
-          }
-        }
-      }
-    },
-    "/progress/level/{levelValue}": {
-      "post": {
-        "summary": "Sets player's level to value specified in the path",
-        "tags": [
-          "Progress"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "levelValue",
-            "in": "path",
-            "description": "Player's new level",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Player's level was updated successfully"
-          },
-          "400": {
-            "description": "Invalid level value provided."
-          },
-          "401": {
-            "description": "Unauthorized. Invalid token or missing 'WP' permission."
-          },
-          "500": {
-            "description": "Internal server error."
-          }
-        }
-      }
-    },
-    "/progress/task/{taskId}": {
-      "post": {
-        "summary": "Update the progress state of a single task.",
-        "tags": [
-          "Progress"
-        ],
-        "description": "Update the progress state of a single task.",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "taskId",
-            "required": true,
-            "description": "The ID (usually UUID from tarkov.dev) of the task to update.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "description": "The new state for the task.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "state"
-                ],
-                "properties": {
-                  "state": {
-                    "type": "string",
-                    "description": "The new state of the task.",
-                    "enum": [
-                      "uncompleted",
-                      "completed",
-                      "failed"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The task was updated successfully."
-          },
-          "400": {
-            "description": "Invalid request parameters (e.g., bad taskId or state)."
-          },
-          "401": {
-            "description": "Unauthorized to update progress (missing 'WP' permission)."
-          },
-          "500": {
-            "description": "Internal server error."
-          }
-        }
-      }
-    },
-    "/progress/tasks": {
-      "post": {
-        "summary": "Updates status for multiple tasks",
-        "tags": [
-          "Progress"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "description": "Object where keys are task IDs and values are the new status (0-3)",
-                "additionalProperties": {
-                  "type": "integer",
-                  "enum": [
-                    0,
-                    1,
-                    2,
-                    3
-                  ]
-                },
-                "example": {
-                  "task1": 2,
-                  "task5": 1
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Tasks updated successfully."
-          },
-          "400": {
-            "description": "Invalid request body format or invalid status values."
-          },
-          "401": {
-            "description": "Unauthorized. Invalid token or missing 'WP' permission."
-          },
-          "500": {
-            "description": "Internal server error during batch update."
-          }
-        }
-      }
-    },
-    "/progress/task/objective/{objectiveId}": {
-      "post": {
-        "summary": "Update objective progress for a task.",
-        "tags": [
-          "Progress"
-        ],
-        "description": "Update the progress (state or count) for a specific task objective.",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "objectiveId",
-            "required": true,
-            "description": "The ID (usually UUID from tarkov.dev) of the task objective to update.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "description": "The objective properties to update. Provide at least one.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "state": {
-                    "type": "string",
-                    "description": "The new state of the task objective.",
-                    "enum": [
-                      "completed",
-                      "uncompleted"
-                    ],
-                    "nullable": true
-                  },
-                  "count": {
-                    "type": "integer",
-                    "description": "The number of items or completions toward the objective's goal.",
-                    "minimum": 0,
-                    "nullable": true
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The objective was updated successfully."
-          },
-          "400": {
-            "description": "Invalid request parameters (e.g., bad objectiveId, state, or count)."
-          },
-          "401": {
-            "description": "Unauthorized to update progress (missing 'WP' permission)."
-          },
-          "500": {
-            "description": "Internal server error."
-          }
-        }
-      }
-    },
-    "/token": {
-      "get": {
-        "summary": "Returns data associated with the Token given in the Authorization header of the request",
-        "tags": [
-          "Token"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Token details retrieved successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
                     "permissions": {
                       "type": "array",
                       "items": {

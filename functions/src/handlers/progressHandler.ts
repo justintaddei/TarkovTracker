@@ -15,7 +15,7 @@ interface AuthenticatedRequest extends Request {
 
 /**
  * @openapi
- * /api/progress:
+ * /progress:
  *   get:
  *     summary: "Returns progress data of the player"
  *     tags:
@@ -74,7 +74,7 @@ export const getPlayerProgress = asyncHandler(async (req: AuthenticatedRequest, 
 
 /**
  * @openapi
- * /api/progress/level/{levelValue}:
+ * /progress/level/{levelValue}:
  *   post:
  *     summary: "Sets player's level to value specified in the path"
  *     tags:
@@ -145,7 +145,7 @@ export const setPlayerLevel = asyncHandler(async (req: AuthenticatedRequest, res
 
 /**
  * @openapi
- * /api/progress/task/{taskId}:
+ * /progress/task/{taskId}:
  *   post:
  *     summary: "Update the progress state of a single task."
  *     tags:
@@ -233,7 +233,7 @@ export const updateSingleTask = asyncHandler(async (req: AuthenticatedRequest, r
 
 /**
  * @openapi
- * /api/progress/tasks:
+ * /progress/tasks:
  *   post:
  *     summary: "Updates status for multiple tasks"
  *     tags:
@@ -310,7 +310,7 @@ export const updateMultipleTasks = asyncHandler(async (req: AuthenticatedRequest
 
 /**
  * @openapi
- * /api/progress/task/objective/{objectiveId}:
+ * /progress/task/objective/{objectiveId}:
  *   post:
  *     summary: "Update objective progress for a task."
  *     tags:

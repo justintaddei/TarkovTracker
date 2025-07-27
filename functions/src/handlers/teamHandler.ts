@@ -14,7 +14,7 @@ interface AuthenticatedRequest extends Request {
 
 /**
  * @openapi
- * /api/team/progress:
+ * /team/progress:
  *   get:
  *     summary: "Returns progress data of all members of the team"
  *     tags:
@@ -68,7 +68,7 @@ export const getTeamProgress = asyncHandler(async (req: AuthenticatedRequest, re
 
 /**
  * @openapi
- * /api/team/create:
+ * /team/create:
  *   post:
  *     summary: "Creates a new team"
  *     tags:
@@ -150,7 +150,7 @@ export const createTeam = asyncHandler(async (req: AuthenticatedRequest, res: Re
 
 /**
  * @openapi
- * /api/team/join:
+ * /team/join:
  *   post:
  *     summary: "Join an existing team"
  *     tags:
@@ -230,7 +230,7 @@ export const joinTeam = asyncHandler(async (req: AuthenticatedRequest, res: Resp
 
 /**
  * @openapi
- * /api/team/leave:
+ * /team/leave:
  *   post:
  *     summary: "Leave current team"
  *     tags:

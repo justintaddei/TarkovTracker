@@ -184,8 +184,8 @@ const swaggerOptions = {
       description: "Player's progress, objectives, level, reputation and more."
     },
     servers: [
-      { url: 'https://tarkovtracker.org', description: 'Production' },
-      { url: 'https://tarkov-tracker-dev.web.app', description: 'Development' }
+      { url: 'https://tarkovtracker.org/api/v2', description: 'Production' },
+      { url: 'https://tarkov-tracker-dev.web.app/api/v2', description: 'Development' }
     ]
   },
   apis: ['lib/**/*.js'] // Generated JS files with JSDoc comments

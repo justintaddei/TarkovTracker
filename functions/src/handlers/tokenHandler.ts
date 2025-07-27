@@ -12,7 +12,7 @@ interface AuthenticatedRequest extends Request {
 
 /**
  * @openapi
- * /api/token:
+ * /token:
  *   get:
  *     summary: "Returns data associated with the Token given in the Authorization header of the request"
  *     tags:
