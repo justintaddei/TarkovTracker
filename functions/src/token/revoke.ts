@@ -1,5 +1,5 @@
 import { logger } from 'firebase-functions/v2';
-import { onRequest, Request, Response } from 'firebase-functions/v2/https';
+import { onRequest } from 'firebase-functions/v2/https';
 import admin from 'firebase-admin';
 import cors from 'cors';
 import {
@@ -158,7 +158,7 @@ export const revokeToken = onRequest(
     memory: '128MiB',
     timeoutSeconds: 20,
   },
-  (req: Request, res: Response) => {
+  (req: any, res: any) => {
   corsHandler(req, res, async () => {
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method Not Allowed' });

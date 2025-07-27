@@ -448,7 +448,7 @@ export const createTeamHttp = onRequest(
     memory: '128MiB',
     timeoutSeconds: 20,
   },
-  async (req: FirebaseRequest, res: Response) => {
+  async (req: any, res: any) => {
   // Set CORS headers
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
