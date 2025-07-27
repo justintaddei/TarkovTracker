@@ -2,6 +2,26 @@
   <v-container class="mt-2 d-flex flex-column" style="min-height: calc(100vh - 250px)">
     <v-alert
       density="compact"
+      color="orange-darken-3"
+      title="Important Announcement"
+      class="mb-3 announcement-alert"
+      style="flex: 0 0 auto"
+      closable
+    >
+      <div class="text-body-2">
+        <div class="mb-1">
+          <strong>PvP and PvE modes have been added!</strong> However, this update likely caused progress loss.
+        </div>
+        <div class="mb-1">
+          Please update your game mode data using the settings in the top right of the site to restore your progress.
+        </div>
+        <div>
+          <strong>Note:</strong> Due to breaking API changes, Tarkov Monitor and Rat Scanner integrations will not work until the API is fully tested and those projects are updated.
+        </div>
+      </div>
+    </v-alert>
+    <v-alert
+      density="compact"
       color="green-darken-4"
       title="Project Status"
       class="mb-3 project-status-alert"
@@ -389,6 +409,7 @@
     }
   }
 
+  .announcement-alert,
   .project-status-alert {
     :deep(.v-alert__content) {
       padding: 8px 0;
@@ -402,6 +423,7 @@
 
   // Make it even more compact on mobile
   @media (max-width: 600px) {
+    .announcement-alert,
     .project-status-alert {
       :deep(.v-alert__content) {
         padding: 6px 0;
