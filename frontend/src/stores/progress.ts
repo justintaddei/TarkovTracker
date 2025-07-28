@@ -273,6 +273,53 @@ export const useProgressStore = defineStore(
       }
       return levels;
     });
+
+    const moduleCompletions = computed(() => {
+      const completions: CompletionsMap = {};
+      if (!hideoutStations.value || !visibleTeamStores.value) return {};
+      
+      // Collect all module IDs from all stations
+      const allModuleIds = hideoutStations.value.flatMap(station => 
+        station.levels?.map(level => level.id) || []
+      );
+      
+      for (const moduleId of allModuleIds) {
+        completions[moduleId] = {};
+        for (const teamId of Object.keys(visibleTeamStores.value)) {
+          const store = visibleTeamStores.value[teamId];
+          // Get current gamemode data, with fallback to legacy structure
+          const currentGameMode = store?.$state.currentGameMode || 'pvp';
+          const currentData = store?.$state[currentGameMode] || store?.$state;
+          completions[moduleId][teamId] = currentData?.hideoutModules?.[moduleId]?.complete ?? false;
+        }
+      }
+      return completions;
+    });
+
+    const modulePartCompletions = computed(() => {
+      const completions: CompletionsMap = {};
+      if (!hideoutStations.value || !visibleTeamStores.value) return {};
+      
+      // Collect all part/requirement IDs from all station levels
+      const allPartIds = hideoutStations.value.flatMap(station => 
+        station.levels?.flatMap(level => 
+          level.itemRequirements?.map(req => req.id) || []
+        ) || []
+      );
+      
+      for (const partId of allPartIds) {
+        completions[partId] = {};
+        for (const teamId of Object.keys(visibleTeamStores.value)) {
+          const store = visibleTeamStores.value[teamId];
+          // Get current gamemode data, with fallback to legacy structure
+          const currentGameMode = store?.$state.currentGameMode || 'pvp';
+          const currentData = store?.$state[currentGameMode] || store?.$state;
+          completions[partId][teamId] = currentData?.hideoutParts?.[partId]?.complete ?? false;
+        }
+      }
+      return completions;
+    });
+
     const getTeamIndex = (teamId: string): string => {
       return teamId === fireuser?.uid ? 'self' : teamId;
     };
@@ -375,6 +422,8 @@ export const useProgressStore = defineStore(
       unlockedTasks,
       objectiveCompletions,
       hideoutLevels,
+      moduleCompletions,
+      modulePartCompletions,
       getTeamIndex,
       getDisplayName,
       getLevel,

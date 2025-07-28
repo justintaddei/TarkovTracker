@@ -38,7 +38,7 @@
         <v-icon color="white" class="mr-2">mdi-key-plus</v-icon>
         <h3 class="text-h6">{{ $t('page.api.tokens.create_new_token') }}</h3>
       </div>
-      
+
       <v-form ref="newTokenForm" v-model="validNewToken">
         <v-text-field
           v-model="tokenName"
@@ -66,17 +66,23 @@
           <div class="text-caption text-medium-emphasis mb-3">
             {{ $t('page.api.tokens.form.permissions_description') }}
           </div>
-          
-          <v-alert v-if="selectOneError" type="error" variant="tonal" density="compact" class="mb-3">
+
+          <v-alert
+            v-if="selectOneError"
+            type="error"
+            variant="tonal"
+            density="compact"
+            class="mb-3"
+          >
             <template #prepend>
-<v-icon >mdi-alert-circle</v-icon>
-</template>
+              <v-icon>mdi-alert-circle</v-icon>
+            </template>
             {{ $t('page.api.tokens.form.permissions_error') }}
           </v-alert>
 
           <v-card variant="outlined" class="pa-3">
             <v-row>
-              <v-col 
+              <v-col
                 v-for="(permission, permissionKey) in availablePermissions"
                 :key="permission"
                 cols="12"
@@ -94,7 +100,11 @@
                   <template #label>
                     <div>
                       <div class="font-weight-medium">{{ permission.title }}</div>
-                      <div class="text-caption text-medium-emphasis">{{ permission.description || 'Access to ' + permission.title.toLowerCase() }}</div>
+                      <div class="text-caption text-medium-emphasis">
+                        {{
+                          permission.description || 'Access to ' + permission.title.toLowerCase()
+                        }}
+                      </div>
                     </div>
                   </template>
                 </v-checkbox>
@@ -103,7 +113,9 @@
           </v-card>
 
           <div v-if="selectedPermissions.length > 0" class="mt-3">
-            <div class="text-caption text-medium-emphasis mb-2">{{ $t('page.api.tokens.form.selected_permissions') }}:</div>
+            <div class="text-caption text-medium-emphasis mb-2">
+              {{ $t('page.api.tokens.form.selected_permissions') }}:
+            </div>
             <div class="d-flex flex-wrap gap-2">
               <v-chip
                 v-for="perm in selectedPermissions"
@@ -161,11 +173,15 @@
       <v-icon :icon="snackbarIcon" class="mr-3"></v-icon>
       <div>
         <div class="font-weight-medium">{{ tokenResult }}</div>
-        <div v-if="tokenResultSubtext" class="text-caption opacity-90">{{ tokenResultSubtext }}</div>
+        <div v-if="tokenResultSubtext" class="text-caption opacity-90">
+          {{ tokenResultSubtext }}
+        </div>
       </div>
     </div>
     <template #actions>
-      <v-btn color="white" variant="text" @click="newTokenSnackbar = false"> {{ $t('page.api.tokens.close') }} </v-btn>
+      <v-btn color="white" variant="text" @click="newTokenSnackbar = false">
+        {{ $t('page.api.tokens.close') }}
+      </v-btn>
     </template>
   </v-snackbar>
 </template>
@@ -177,6 +193,7 @@
   import { useLiveData } from '@/composables/livedata';
   import availablePermissions from '@/utils/api_permissions';
   import TokenCard from '@/features/settings/TokenCard.vue';
+  import { auth } from '@/plugins/firebase';
   const { t } = useI18n({ useScope: 'global' });
   const { useSystemStore } = useLiveData();
   const { systemStore } = useSystemStore();
@@ -222,6 +239,33 @@
     selectOneError.value = false;
     tokenNameError.value = '';
   };
+  const createTokenWithHttp = async (tokenData) => {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    const token = await user.getIdToken();
+
+    const response = await fetch(
+      'https://us-central1-tarkovtracker-org.cloudfunctions.net/createTokenHttp',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(tokenData),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'HTTP request failed');
+    }
+
+    return await response.json();
+  };
+
   const createToken = async () => {
     let { valid } = await newTokenForm.value.validate();
     if (!valid) {
@@ -240,15 +284,28 @@
       selectOneError.value = false;
     }
     creatingToken.value = true;
+
+    const tokenData = {
+      note: tokenName.value,
+      permissions: selectedPermissions.value,
+    };
+
     try {
-      const createTokenFn = httpsCallable(functions, 'createToken');
-      tokenResult.value = await createTokenFn({
-        note: tokenName.value,
-        permissions: selectedPermissions.value,
-      });
-      if (!tokenResult.value.data || !tokenResult.value.data.token) {
-        console.error('Token not found in response. Expected: tokenResult.value.data.token');
-        console.error('Available response data:', Object.keys(tokenResult.value.data || {}));
+      let result;
+      try {
+        // Try the callable function first
+        const createTokenFn = httpsCallable(functions, 'createToken');
+        const callableResult = await createTokenFn(tokenData);
+        result = callableResult.data;
+      } catch (callableError) {
+        console.warn('Callable function failed, trying HTTP endpoint:', callableError);
+        // If callable fails (likely due to CORS), use HTTP endpoint
+        result = await createTokenWithHttp(tokenData);
+      }
+
+      if (!result || !result.token) {
+        console.error('Token not found in response. Expected: result.token');
+        console.error('Available response data:', Object.keys(result || {}));
       }
       cancelTokenCreation();
       snackbarColor.value = 'success';
@@ -287,10 +344,10 @@
       flex-direction: column;
       gap: 1rem;
     }
-    
+
     .d-flex.gap-2 {
       justify-content: stretch;
-      
+
       .v-btn {
         flex: 1;
       }

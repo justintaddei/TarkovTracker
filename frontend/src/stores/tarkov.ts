@@ -60,7 +60,14 @@ export const useTarkovStore = defineStore('swapTarkov', {
       if (fireuser.uid) {
         try {
           const userProgressRef = doc(firestore, 'progress', fireuser.uid);
-          await setDoc(userProgressRef, { currentGameMode: mode }, { merge: true });
+          // Send complete state to satisfy Firestore security rules validation
+          const completeState = {
+            currentGameMode: mode,
+            gameEdition: this.gameEdition,
+            pvp: this.pvp,
+            pve: this.pve,
+          };
+          await setDoc(userProgressRef, completeState, { merge: true });
         } catch (error) {
           console.error('Error syncing gamemode to backend:', error);
           // TODO: Show error notification to user
@@ -102,6 +109,10 @@ export const useTarkovStore = defineStore('swapTarkov', {
         // Set the Firestore document to a fresh defaultState
         const freshDefaultState = JSON.parse(JSON.stringify(defaultState));
         await setDoc(userProgressRef, freshDefaultState);
+
+        // Clear ALL localStorage data for full account reset
+        localStorage.clear();
+
         // Reset the local Pinia store state to default using $patch
         // This ensures the in-memory state reflects the reset immediately.
         this.$patch(JSON.parse(JSON.stringify(defaultState)));
@@ -114,18 +125,21 @@ export const useTarkovStore = defineStore('swapTarkov', {
         console.error('User not logged in. Cannot reset game mode data.');
         return;
       }
-      
+
       const currentMode = this.getCurrentGameMode();
       const userProgressRef = doc(firestore, 'progress', fireuser.uid);
-      
+
       try {
         // Create fresh default progress data for the current game mode
         const freshProgressData = JSON.parse(JSON.stringify(defaultState[currentMode]));
-        
+
         // Update only the current game mode data in Firestore
         const updateData = { [currentMode]: freshProgressData };
         await setDoc(userProgressRef, updateData, { merge: true });
-        
+
+        // Clear ALL localStorage data for gamemode reset
+        localStorage.clear();
+
         // Reset only the current game mode data in the local store
         this.$patch({ [currentMode]: freshProgressData });
       } catch (error) {

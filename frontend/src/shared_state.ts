@@ -90,7 +90,13 @@ export function migrateToGameModeStructure(legacyData: unknown): UserState {
   }
 
   // Handle partial migration case - has currentGameMode but missing pvp/pve structure
-  if (legacyData && typeof legacyData === 'object' && 'currentGameMode' in legacyData && !('pvp' in legacyData) && !('pve' in legacyData)) {
+  if (
+    legacyData &&
+    typeof legacyData === 'object' &&
+    'currentGameMode' in legacyData &&
+    !('pvp' in legacyData) &&
+    !('pve' in legacyData)
+  ) {
     const data = legacyData as Record<string, unknown>;
     // This is a partially migrated state, use the existing data as legacy format
     const migratedProgressData: UserProgressData = {
@@ -104,7 +110,7 @@ export function migrateToGameModeStructure(legacyData: unknown): UserState {
     };
 
     return {
-      currentGameMode: (data.currentGameMode as GameMode),
+      currentGameMode: data.currentGameMode as GameMode,
       gameEdition: (data.gameEdition as number) || defaultState.gameEdition,
       pvp: migratedProgressData,
       pve: JSON.parse(JSON.stringify(defaultProgressData)),

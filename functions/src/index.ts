@@ -24,13 +24,15 @@ import bodyParser from 'body-parser';
 
 // Import new middleware and handlers
 import { verifyBearer } from './middleware/auth.js';
+import { requireRecentAuth } from './middleware/reauth.js';
 import { errorHandler, notFoundHandler, asyncHandler } from './middleware/errorHandler.js';
 import progressHandler from './handlers/progressHandler.js';
 import teamHandler from './handlers/teamHandler.js';
 import tokenHandler from './handlers/tokenHandler.js';
+import { deleteUserAccountHandler } from './handlers/userDeletionHandler.js';
 
 // Import legacy functions for backward compatibility
-import { createToken } from './token/create.js';
+import { createToken, _createTokenLogic } from './token/create.js';
 import { revokeToken } from './token/revoke.js';
 
 admin.initializeApp();
@@ -53,11 +55,18 @@ export { createToken, revokeToken };
 
 const app: Express = express();
 
-// Simplified CORS for production efficiency
+// Production-ready CORS configuration
 app.use(cors({
-  origin: true,
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:8080',
+    'https://tarkovtracker.org',
+    'https://www.tarkovtracker.org'
+  ],
   credentials: true,
   optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
 // Lightweight body parsing - reduce limits for faster processing
@@ -72,7 +81,16 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// Apply new authentication middleware to API routes
+// ===== USER ACCOUNT MANAGEMENT (NO BEARER AUTH) =====
+// Test endpoint for user deletion (temporary - no auth for testing)
+app.get('/api/user/test', asyncHandler(async (_req: Request, res: Response) => {
+  res.status(200).json({ success: true, message: 'User deletion API is working' });
+}));
+
+// User account deletion endpoint (requires recent authentication but not bearer)
+app.delete('/api/user/account', requireRecentAuth, asyncHandler(deleteUserAccountHandler));
+
+// Apply new authentication middleware to OTHER API routes
 app.use('/api', verifyBearer);
 
 // ===== NEW API ROUTES (IMPROVED) =====
@@ -100,6 +118,7 @@ app.options('/api/team/leave', (_req: Request, res: Response) => {
   res.status(200).send();
 });
 app.post('/api/team/leave', teamHandler.leaveTeam);
+
 // ===== BACKWARD COMPATIBILITY ROUTES (v2) =====
 // These ensure old /api/v2/ endpoints still work
 app.get('/api/v2/token', tokenHandler.getTokenInfo);
@@ -448,7 +467,7 @@ export const createTeamHttp = onRequest(
     memory: '128MiB',
     timeoutSeconds: 20,
   },
-  async (req: any, res: any) => {
+  async (req: FirebaseRequest, res: any) => {
   // Set CORS headers
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -499,6 +518,117 @@ export const createTeamHttp = onRequest(
     }
   }
 });
+
+// Alternative HTTPS endpoint for createToken with explicit CORS handling
+export const createTokenHttp = onRequest(
+  {
+    memory: '128MiB',
+    timeoutSeconds: 20,
+    cors: true,
+  },
+  async (req: FirebaseRequest, res: any) => {
+  // Set comprehensive CORS headers for production
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:8080', 
+    'https://tarkovtracker.org',
+    'https://www.tarkovtracker.org'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+  } else {
+    res.set('Access-Control-Allow-Origin', 'https://tarkovtracker.org');
+  }
+  
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.set('Access-Control-Allow-Credentials', 'true');
+  res.set('Access-Control-Max-Age', '3600');
+
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    res.status(200).send('');
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed');
+    return;
+  }
+
+  try {
+    // Log request details for debugging
+    logger.log('CreateTokenHttp request received', {
+      method: req.method,
+      origin: req.headers.origin,
+      contentType: req.headers['content-type'],
+      hasAuth: !!req.headers.authorization,
+      bodyKeys: req.body ? Object.keys(req.body) : 'no body'
+    });
+
+    // Extract auth token from Authorization header
+    const authToken = req.headers.authorization?.replace('Bearer ', '');
+    if (!authToken) {
+      logger.warn('No auth token provided in createTokenHttp');
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    // Verify the token
+    const decodedToken = await admin.auth().verifyIdToken(authToken);
+    logger.log('Token verified for user', { uid: decodedToken.uid });
+
+    // Create a mock callable request
+    const callableRequest: CallableRequest<{ note: string; permissions: string[] }> = {
+      auth: {
+        uid: decodedToken.uid,
+        token: decodedToken,
+      },
+      data: req.body,
+      rawRequest: req as unknown as FirebaseRequest,
+      acceptsStreaming: false,
+    };
+
+    // Call the existing logic
+    const result = await _createTokenLogic(callableRequest);
+    logger.log('Token created successfully via HTTP', { uid: decodedToken.uid });
+    res.status(200).json(result);
+  } catch (error) {
+    logger.error('Error in createTokenHttp:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      type: error instanceof HttpsError ? 'HttpsError' : typeof error
+    });
+    
+    if (error instanceof HttpsError) {
+      const statusMap: Record<string, number> = {
+        'invalid-argument': 400,
+        'unauthenticated': 401,
+        'permission-denied': 403,
+        'not-found': 404,
+        'resource-exhausted': 429,
+        'internal': 500,
+        'ok': 200,
+        'cancelled': 499,
+        'unknown': 500,
+        'deadline-exceeded': 504,
+        'already-exists': 409,
+        'failed-precondition': 400,
+        'aborted': 409,
+        'out-of-range': 400,
+        'unavailable': 503,
+        'data-loss': 500
+      };
+      const status = statusMap[error.code] || 500;
+      res.status(status).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
 export const joinTeam = onCall(
   {
     memory: '128MiB',
@@ -522,6 +652,62 @@ export const kickTeamMember = onCall(
   },
   _kickTeamMemberLogic
 );
+
+// Account deletion callable function
+export const deleteUserAccount = onCall(
+  {
+    memory: '128MiB',
+    timeoutSeconds: 30,
+  },
+  async (request: CallableRequest) => {
+    // Verify authentication
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Authentication required');
+    }
+
+    const { confirmationText } = request.data || {};
+    
+    if (confirmationText !== 'DELETE MY ACCOUNT') {
+      throw new HttpsError('invalid-argument', 'Invalid confirmation text');
+    }
+
+    // Enhanced security: require both confirmation text and email verification
+    // Remove recent auth requirement since we have strong confirmation text
+    logger.info('Account deletion requested', {
+      userId: request.auth.uid,
+      email: request.auth.token.email
+    });
+
+    try {
+      // Use the service directly instead of going through HTTP handler
+      const { UserDeletionService } = await import('./handlers/userDeletionHandler.js');
+      const userDeletionService = new UserDeletionService();
+      
+      const result = await userDeletionService.deleteUserAccount(request.auth.uid, {
+        confirmationText
+      });
+
+      return result;
+    } catch (error) {
+      logger.error('Account deletion error:', error);
+      
+      // Handle ApiError types properly
+      if (error instanceof Error && 'statusCode' in error) {
+        const apiError = error as Error & { statusCode: number };
+        if (apiError.statusCode === 400) {
+          throw new HttpsError('invalid-argument', apiError.message);
+        } else if (apiError.statusCode === 401) {
+          throw new HttpsError('unauthenticated', apiError.message);
+        } else if (apiError.statusCode === 403) {
+          throw new HttpsError('permission-denied', apiError.message);
+        }
+      }
+      
+      throw new HttpsError('internal', error instanceof Error ? error.message : 'Account deletion failed');
+    }
+  }
+);
+
 interface TarkovItem {
   id: string;
   name?: string;

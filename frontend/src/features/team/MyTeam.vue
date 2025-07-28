@@ -198,7 +198,6 @@
     userStore.getStreamerMode ? t('page.team.card.myteam.url_hidden') : teamUrl.value
   );
 
-
   watch(
     () => tarkovStore.getDisplayName,
     (newDisplayName) => {

@@ -36,12 +36,7 @@
       :is-collapsed="props.isCollapsed"
     >
     </drawer-item>
-    <drawer-item
-      icon="mdi-api"
-      locale-key="api"
-      to="/api"
-      :is-collapsed="props.isCollapsed"
-    >
+    <drawer-item icon="mdi-api" locale-key="api" to="/api" :is-collapsed="props.isCollapsed">
     </drawer-item>
   </v-list>
 </template>

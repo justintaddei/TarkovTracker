@@ -16,7 +16,6 @@ export function useDataMigration() {
   const fetchingApi = ref(false);
   const apiFetchSuccess = ref(false);
   const showToken = ref(false);
-  
 
   // Import state
   const importing = ref(false);

@@ -71,15 +71,15 @@
   const navBarIcon = computed(() => {
     return appStore.drawerShow && appStore.drawerRail ? 'mdi-menu-open' : 'mdi-menu';
   });
-  
+
   const currentGameMode = computed(() => {
     return tarkovStore.getCurrentGameMode();
   });
-  
+
   const gameModeColor = computed(() => {
     return currentGameMode.value === 'pvp' ? 'red' : 'green';
   });
-  
+
   const OverflowMenu = defineAsyncComponent(() => import('@/features/layout/OverflowMenu'));
   const { loading: dataLoading, error: dataError, hideoutLoading } = useTarkovData();
   const { mdAndDown } = useDisplay();

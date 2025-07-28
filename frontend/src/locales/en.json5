@@ -17,6 +17,12 @@
       reset_gamemode_confirmation: 'Are you sure you want to reset all {mode} progress? This cannot be undone.',
       reset_gamemode_confirm_button: 'Reset {mode}',
       reset_gamemode_cancel_button: 'Cancel',
+      full_account_reset: 'Full Account Reset',
+      full_account_reset_confirm_title: 'Confirm Full Account Reset',
+      full_account_reset_warning: 'WARNING: This will permanently delete ALL your progress data, settings, and local storage.',
+      full_account_reset_confirmation: 'This action will completely reset your account to defaults. Are you absolutely sure?',
+      full_account_reset_confirm_button: 'DELETE ALL DATA',
+      full_account_reset_cancel_button: 'Cancel',
     },
   },
   common: {
@@ -262,7 +268,7 @@
         form: {
           description_label: 'Token Description',
           description_placeholder: 'e.g., Tarkov Monitor, Rat Scanner, etc.',
-          description_hint: 'Choose a descriptive name to identify this token\'s purpose',
+          description_hint: "Choose a descriptive name to identify this token's purpose",
           permissions_title: 'Token Permissions',
           permissions_description: 'Select the minimum permissions needed for your use case. You can always create additional tokens with different permissions.',
           permissions_error: 'Please select at least one permission for this token.',

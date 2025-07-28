@@ -88,7 +88,8 @@ export function useTarkovDataQuery(gameMode: ComputedRef<string> = computed(() =
     fetchPolicy: 'cache-first',
     notifyOnNetworkStatusChange: true,
     errorPolicy: 'all',
-    enabled: computed(() => !!availableLanguages.value),
+    // Allow query to execute immediately, don't wait for availableLanguages
+    // The languageCode computed will default to 'en' if languages aren't loaded yet
   });
   // Watch for language and gameMode changes and refetch
   watch([apiLanguageCode, gameMode], ([newLang, newGameMode], [oldLang, oldGameMode]) => {
@@ -118,7 +119,8 @@ export function useTarkovHideoutQuery(gameMode: ComputedRef<string> = computed((
     fetchPolicy: 'cache-and-network',
     notifyOnNetworkStatusChange: true,
     errorPolicy: 'all',
-    enabled: computed(() => !!availableLanguages.value),
+    // Allow query to execute immediately, don't wait for availableLanguages
+    // The languageCode computed will default to 'en' if languages aren't loaded yet
   });
   // Watch for language and gameMode changes and refetch
   watch([apiLanguageCode, gameMode], ([newLang, newGameMode], [oldLang, oldGameMode]) => {

@@ -56,25 +56,27 @@ export default class DataMigrationService {
    * @param taskObjectives The task objectives to transform
    * @returns Transformed task objectives compatible with UserProgressData
    */
-  private static transformTaskObjectives(taskObjectives: ProgressData['taskObjectives']): UserProgressData['taskObjectives'] {
+  private static transformTaskObjectives(
+    taskObjectives: ProgressData['taskObjectives']
+  ): UserProgressData['taskObjectives'] {
     const transformed: UserProgressData['taskObjectives'] = {};
-    
+
     if (taskObjectives) {
       for (const [id, objective] of Object.entries(taskObjectives)) {
         const transformedObjective: Record<string, unknown> = {
           complete: objective.complete || false,
           count: objective.count || 0,
         };
-        
+
         // Only include timestamp if it's not null/undefined
         if (objective.timestamp !== null && objective.timestamp !== undefined) {
           transformedObjective.timestamp = objective.timestamp;
         }
-        
+
         transformed[id] = transformedObjective;
       }
     }
-    
+
     return transformed;
   }
 
@@ -83,25 +85,27 @@ export default class DataMigrationService {
    * @param hideoutParts The hideout parts to transform
    * @returns Transformed hideout parts compatible with UserProgressData
    */
-  private static transformHideoutParts(hideoutParts: ProgressData['hideoutParts']): UserProgressData['hideoutParts'] {
+  private static transformHideoutParts(
+    hideoutParts: ProgressData['hideoutParts']
+  ): UserProgressData['hideoutParts'] {
     const transformed: UserProgressData['hideoutParts'] = {};
-    
+
     if (hideoutParts) {
       for (const [id, part] of Object.entries(hideoutParts)) {
         const transformedPart: Record<string, unknown> = {
           complete: part.complete || false,
           count: part.count || 0,
         };
-        
+
         // Only include timestamp if it's not null/undefined
         if (part.timestamp !== null && part.timestamp !== undefined) {
           transformedPart.timestamp = part.timestamp;
         }
-        
+
         transformed[id] = transformedPart;
       }
     }
-    
+
     return transformed;
   }
   /**
@@ -308,7 +312,11 @@ export default class DataMigrationService {
    * @param {GameMode} _targetGameMode Ignored - data is always imported into PvP mode
    * @returns {Promise<boolean>} True if import was successful
    */
-  static async importDataToUser(uid: string, importedData: ProgressData, _targetGameMode?: GameMode): Promise<boolean> {
+  static async importDataToUser(
+    uid: string,
+    importedData: ProgressData,
+    _targetGameMode?: GameMode
+  ): Promise<boolean> {
     if (!uid) {
       console.error('[DataMigrationService] No UID provided for importDataToUser.');
       return false;
@@ -321,7 +329,7 @@ export default class DataMigrationService {
       // Get existing user data to preserve the other game mode
       const progressRef = doc(firestore, 'progress', uid);
       let existingData: UserState = { ...defaultState };
-      
+
       try {
         const existingDoc = await getDoc(progressRef);
         if (existingDoc.exists()) {
@@ -329,7 +337,10 @@ export default class DataMigrationService {
           existingData = migrateToGameModeStructure(rawData);
         }
       } catch (getError) {
-        console.warn('[DataMigrationService] Could not get existing data, using defaults:', getError);
+        console.warn(
+          '[DataMigrationService] Could not get existing data, using defaults:',
+          getError
+        );
       }
 
       // Transform the legacy import data to the new UserProgressData format
@@ -347,9 +358,10 @@ export default class DataMigrationService {
       const newUserState: UserState = {
         ...existingData,
         currentGameMode: 'pvp',
-        gameEdition: typeof importedData.gameEdition === 'string' 
-          ? parseInt(importedData.gameEdition) || 1 
-          : importedData.gameEdition || 1,
+        gameEdition:
+          typeof importedData.gameEdition === 'string'
+            ? parseInt(importedData.gameEdition) || 1
+            : importedData.gameEdition || 1,
         pvp: transformedProgressData,
       };
 
@@ -381,7 +393,7 @@ export default class DataMigrationService {
 
       try {
         await setDoc(progressRef, newUserState as DocumentData, { merge: true });
-        
+
         // Update local storage to reflect the imported data in the new structure
         localStorage.setItem(LOCAL_PROGRESS_KEY, JSON.stringify(newUserState));
         return true;

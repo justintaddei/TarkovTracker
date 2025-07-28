@@ -181,7 +181,7 @@
         <refresh-button />
       </v-col>
     </v-row>
-    <v-row v-if="!loadingTasks && !reloadingTasks && visibleTasks.length == 0">
+    <v-row v-if="!loadingTasks && !reloadingTasks && (visibleTasks?.length || 0) == 0">
       <v-col cols="12">
         <v-alert icon="mdi-clipboard-search"> {{ t('page.tasks.notasksfound') }}</v-alert>
       </v-col>
@@ -204,7 +204,7 @@
       </v-col>
       <v-col cols="12" class="my-1">
         <task-card
-          v-for="(task, taskIndex) in visibleTasks"
+          v-for="(task, taskIndex) in visibleTasks || []"
           :key="taskIndex"
           :task="task"
           :active-user-view="activeUserView"
@@ -395,37 +395,18 @@
       return true;
     }
 
-    // Check if progress store team data is ready
-    if (
-      !progressStore.visibleTeamStores ||
-      Object.keys(progressStore.visibleTeamStores).length === 0
-    ) {
+    // Check if progress store objects exist
+    if (!progressStore.unlockedTasks || !progressStore.tasksCompletions || !progressStore.playerFaction) {
       return true;
     }
 
-    // Check if task-specific progress computations are ready
-    // These are what TaskList actually uses to determine task availability
-    if (
-      !progressStore.unlockedTasks ||
-      !progressStore.tasksCompletions ||
-      !progressStore.playerFaction
-    ) {
-      return true;
-    }
-
-    // Check if the task computations have actually been calculated for some tasks
-    // (empty objects mean computations haven't run yet)
-    if (
-      Object.keys(progressStore.unlockedTasks).length === 0 ||
-      Object.keys(progressStore.tasksCompletions).length === 0
-    ) {
-      return true;
-    }
-
+    // Always allow tasks to display even if progress computations aren't ready yet
+    // The tasks will show as locked/unavailable until user data loads, which is acceptable UX
     return false;
   });
   const reloadingTasks = ref(false);
   const visibleTasks = shallowRef([]);
+  const loadingTimeout = ref(null);
   const visibleGPS = computed(() => {
     let visibleGPS = [];
 
@@ -436,7 +417,7 @@
     if (activeSecondaryView.value != 'available') {
       return [];
     }
-    for (const task of visibleTasks.value) {
+    for (const task of visibleTasks.value || []) {
       let unlockedUsers = [];
       if (progressStore.unlockedTasks && progressStore.unlockedTasks[task.id]) {
         Object.entries(progressStore.unlockedTasks[task.id]).forEach(([teamId, unlocked]) => {
@@ -606,161 +587,170 @@
   ];
   const updateVisibleTasks = async function () {
     // Simple guard clauses - data should be available due to global initialization
-    if (tasksLoading.value || !tasks.value || !Array.isArray(disabledTasks)) {
-      return;
-    }
-    reloadingTasks.value = true; // Indicate we are starting the actual processing
-    let visibleTaskList = JSON.parse(JSON.stringify(tasks.value));
-    if (activePrimaryView.value == 'maps') {
-      // If merged map selected, filter for both IDs
-      const mergedMap = mergedMaps.value.find(
-        (m) => m.mergedIds && m.mergedIds.includes(activeMapView.value)
-      );
-      if (mergedMap) {
-        const ids = mergedMap.mergedIds;
-        visibleTaskList = visibleTaskList.filter((task) => {
-          // Check locations field
-          let taskLocations = Array.isArray(task.locations) ? task.locations : [];
-          let hasMap = ids.some((id) => taskLocations.includes(id));
-          // Check objectives[].maps
-          if (!hasMap && Array.isArray(task.objectives)) {
-            hasMap = task.objectives.some(
-              (obj) =>
-                Array.isArray(obj.maps) &&
-                obj.maps.some((map) => ids.includes(map.id)) &&
-                mapObjectiveTypes.includes(obj.type)
-            );
-          }
-          return hasMap;
-        });
-      } else {
-        // Default: single map logic
-        visibleTaskList = visibleTaskList.filter((task) => {
-          return task.objectives?.some(
-            (obj) =>
-              obj.maps?.some((map) => map.id === activeMapView.value) &&
-              mapObjectiveTypes.includes(obj.type)
-          );
-        });
-      }
-    } else if (activePrimaryView.value == 'traders') {
-      visibleTaskList = visibleTaskList.filter((task) => task.trader?.id == activeTraderView.value);
-    }
-    if (activeUserView.value == 'all') {
-      // We want to show tasks by their availability to any team member
-      if (activeSecondaryView.value == 'available') {
-        let tempVisibleTasks = [];
-        for (const task of visibleTaskList) {
-          let usersWhoNeedTask = [];
-          let taskIsNeededBySomeone = false;
-          for (const teamId of Object.keys(progressStore.visibleTeamStores || {})) {
-            const isUnlockedForUser = progressStore.unlockedTasks?.[task.id]?.[teamId] === true;
-            const isCompletedByUser = progressStore.tasksCompletions?.[task.id]?.[teamId] === true;
-            // Check faction requirements for this specific user
-            const userFaction = progressStore.playerFaction[teamId];
-            const taskFaction = task.factionName;
-            const factionMatch = taskFaction == 'Any' || taskFaction == userFaction;
-            if (isUnlockedForUser && !isCompletedByUser && factionMatch) {
-              taskIsNeededBySomeone = true;
-              usersWhoNeedTask.push(progressStore.getDisplayName(teamId));
-            }
-          }
-          if (taskIsNeededBySomeone) {
-            tempVisibleTasks.push({ ...task, neededBy: usersWhoNeedTask });
-          }
-        }
-        visibleTaskList = tempVisibleTasks;
-      } else {
-        console.warn(
-          "updateVisibleTasks: 'all' user view combined with non-'available' " +
-            'secondary view - unexpected state.'
-        );
-      }
-    } else {
-      // We want to show tasks by their availability to a specific team member
-      if (activeSecondaryView.value == 'available') {
-        visibleTaskList = visibleTaskList.filter((task) => {
-          const unlockedTasks = progressStore.unlockedTasks?.[task.id];
-          return unlockedTasks?.[activeUserView.value] === true;
-        });
-      } else if (activeSecondaryView.value == 'locked') {
-        visibleTaskList = visibleTaskList.filter((task) => {
-          const taskCompletions = progressStore.tasksCompletions?.[task.id];
-          const unlockedTasks = progressStore.unlockedTasks?.[task.id];
-          return (
-            taskCompletions?.[activeUserView.value] != true &&
-            unlockedTasks?.[activeUserView.value] != true
-          );
-        });
-      } else if (activeSecondaryView.value == 'completed') {
-        visibleTaskList = visibleTaskList.filter((task) => {
-          return progressStore.tasksCompletions?.[task.id]?.[activeUserView.value] == true;
-        });
-      }
-      // Filter out tasks not for the faction of the specified user
-      visibleTaskList = visibleTaskList.filter((task) => {
-        return (
-          task.factionName == 'Any' ||
-          task.factionName == progressStore.playerFaction[activeUserView.value]
-        );
-      });
-    }
-    // Remove any disabled tasks from the view
-    visibleTaskList = visibleTaskList.filter(
-      (task) =>
-        task &&
-        typeof task.id === 'string' &&
-        // Simplified check: since watchEffect guarantees disabledTasks.value is an array,
-        // we only need to check if the task ID is *not* included.
-        !disabledTasks.includes(task.id)
-    );
-    // Use optional chaining to safely access .value
-    if (hideNonKappaTasks?.value) {
-      visibleTaskList = visibleTaskList.filter((task) => task.kappaRequired == true);
-    }
-    // Finally, map the tasks to their IDs
-    //visibleTaskList = visibleTaskList.map((task) => task.id)
-    // Sort the tasks by their count of successors
-    visibleTaskList.sort((a, b) => {
-      return b.successors.length - a.successors.length;
-    });
-    reloadingTasks.value = false;
-    visibleTasks.value = visibleTaskList;
-  };
-  // Watch for changes that affect visible tasks and update accordingly
-  watchEffect(async () => {
-    // Basic readiness checks
-    if (
-      tasksLoading.value ||
-      !tasks.value ||
-      !disabledTasks ||
-      !Array.isArray(disabledTasks) ||
-      !progressStore.unlockedTasks ||
-      !progressStore.tasksCompletions ||
-      !progressStore.playerFaction
-    ) {
+    if (loadingTasks.value || !Array.isArray(disabledTasks)) {
       return;
     }
 
-    // Wait for task-specific progress computations to be ready (race condition fix)
-    if (tasks.value.length > 0) {
-      if (
-        !progressStore.visibleTeamStores ||
-        Object.keys(progressStore.visibleTeamStores).length === 0
-      ) {
-        return;
+    try {
+      reloadingTasks.value = true; // Indicate we are starting the actual processing
+      let visibleTaskList = JSON.parse(JSON.stringify(tasks.value));
+      if (activePrimaryView.value == 'maps') {
+        // If merged map selected, filter for both IDs
+        const mergedMap = mergedMaps.value.find(
+          (m) => m.mergedIds && m.mergedIds.includes(activeMapView.value)
+        );
+        if (mergedMap) {
+          const ids = mergedMap.mergedIds;
+          visibleTaskList = visibleTaskList.filter((task) => {
+            // Check locations field
+            let taskLocations = Array.isArray(task.locations) ? task.locations : [];
+            let hasMap = ids.some((id) => taskLocations.includes(id));
+            // Check objectives[].maps
+            if (!hasMap && Array.isArray(task.objectives)) {
+              hasMap = task.objectives.some(
+                (obj) =>
+                  Array.isArray(obj.maps) &&
+                  obj.maps.some((map) => ids.includes(map.id)) &&
+                  mapObjectiveTypes.includes(obj.type)
+              );
+            }
+            return hasMap;
+          });
+        } else {
+          // Default: single map logic
+          visibleTaskList = visibleTaskList.filter((task) => {
+            return task.objectives?.some(
+              (obj) =>
+                obj.maps?.some((map) => map.id === activeMapView.value) &&
+                mapObjectiveTypes.includes(obj.type)
+            );
+          });
+        }
+      } else if (activePrimaryView.value == 'traders') {
+        visibleTaskList = visibleTaskList.filter(
+          (task) => task.trader?.id == activeTraderView.value
+        );
       }
-      if (
-        Object.keys(progressStore.unlockedTasks).length === 0 ||
-        Object.keys(progressStore.tasksCompletions).length === 0
-      ) {
-        return;
+      if (activeUserView.value == 'all') {
+        // We want to show tasks by their availability to any team member
+        if (activeSecondaryView.value == 'available') {
+          let tempVisibleTasks = [];
+          for (const task of visibleTaskList) {
+            let usersWhoNeedTask = [];
+            let taskIsNeededBySomeone = false;
+            for (const teamId of Object.keys(progressStore.visibleTeamStores || {})) {
+              const isUnlockedForUser = progressStore.unlockedTasks?.[task.id]?.[teamId] === true;
+              const isCompletedByUser =
+                progressStore.tasksCompletions?.[task.id]?.[teamId] === true;
+              // Check faction requirements for this specific user
+              const userFaction = progressStore.playerFaction[teamId];
+              const taskFaction = task.factionName;
+              const factionMatch = taskFaction == 'Any' || taskFaction == userFaction;
+              if (isUnlockedForUser && !isCompletedByUser && factionMatch) {
+                taskIsNeededBySomeone = true;
+                usersWhoNeedTask.push(progressStore.getDisplayName(teamId));
+              }
+            }
+            if (taskIsNeededBySomeone) {
+              tempVisibleTasks.push({ ...task, neededBy: usersWhoNeedTask });
+            }
+          }
+          visibleTaskList = tempVisibleTasks;
+        } else {
+          console.warn(
+            "updateVisibleTasks: 'all' user view combined with non-'available' " +
+              'secondary view - unexpected state.'
+          );
+        }
+      } else {
+        // We want to show tasks by their availability to a specific team member
+        if (activeSecondaryView.value == 'available') {
+          visibleTaskList = visibleTaskList.filter((task) => {
+            const unlockedTasks = progressStore.unlockedTasks?.[task.id];
+            // If progress data isn't loaded yet, show all tasks as potentially available
+            // This prevents the "no tasks found" issue during initialization
+            if (!unlockedTasks || Object.keys(progressStore.unlockedTasks).length === 0) {
+              return true; // Show task until we know for sure it's not available
+            }
+            return unlockedTasks?.[activeUserView.value] === true;
+          });
+        } else if (activeSecondaryView.value == 'locked') {
+          visibleTaskList = visibleTaskList.filter((task) => {
+            const taskCompletions = progressStore.tasksCompletions?.[task.id];
+            const unlockedTasks = progressStore.unlockedTasks?.[task.id];
+            // If progress data isn't loaded yet, show all tasks as potentially locked
+            if ((!taskCompletions && !unlockedTasks) || Object.keys(progressStore.unlockedTasks).length === 0) {
+              return true; // Show task until we know for sure its status
+            }
+            return (
+              taskCompletions?.[activeUserView.value] != true &&
+              unlockedTasks?.[activeUserView.value] != true
+            );
+          });
+        } else if (activeSecondaryView.value == 'completed') {
+          visibleTaskList = visibleTaskList.filter((task) => {
+            // If progress data isn't loaded yet, don't show any tasks as completed
+            if (Object.keys(progressStore.tasksCompletions).length === 0) {
+              return false; // Don't show tasks as completed until we know for sure
+            }
+            return progressStore.tasksCompletions?.[task.id]?.[activeUserView.value] == true;
+          });
+        }
+        // Filter out tasks not for the faction of the specified user
+        visibleTaskList = visibleTaskList.filter((task) => {
+          // If faction data isn't loaded yet, show all faction tasks
+          if (!progressStore.playerFaction[activeUserView.value]) {
+            return true; // Show task until we know the user's faction
+          }
+          return (
+            task.factionName == 'Any' ||
+            task.factionName == progressStore.playerFaction[activeUserView.value]
+          );
+        });
       }
+      // Apply filters in one pass for better performance
+      visibleTaskList = visibleTaskList.filter((task) => {
+        // Basic validation
+        if (!task || typeof task.id !== 'string') return false;
+        
+        // Check disabled tasks
+        if (disabledTasks.includes(task.id)) return false;
+        
+        // Check Kappa filter
+        if (hideNonKappaTasks?.value && task.kappaRequired !== true) return false;
+        
+        return true;
+      });
+      
+      // Sort the tasks by their count of successors
+      visibleTaskList.sort((a, b) => b.successors.length - a.successors.length);
+      
+      visibleTasks.value = visibleTaskList;
+    } catch (error) {
+      console.error('Error updating visible tasks:', error);
+      // Reset to empty state on error to prevent stuck loading
+      visibleTasks.value = [];
+    } finally {
+      // Always reset loading state, even on error
+      reloadingTasks.value = false;
+    }
+  };
+  // Watch for changes that affect visible tasks and update accordingly  
+  watchEffect(async () => {
+    // Clear any existing timeout
+    if (loadingTimeout.value) {
+      clearTimeout(loadingTimeout.value);
+      loadingTimeout.value = null;
+    }
+
+    // If still loading, don't try to update tasks yet
+    if (loadingTasks.value) {
+      return;
     }
 
     await updateVisibleTasks();
   });
-  // Watch for changes to all of the views, and update the visible tasks
+  // Additional watch for view changes that don't trigger watchEffect
   watch(
     [
       activePrimaryView,
@@ -768,15 +758,15 @@
       activeTraderView,
       activeSecondaryView,
       activeUserView,
-      tasks,
       hideGlobalTasks,
       hideNonKappaTasks,
       () => tarkovStore.playerLevel,
     ],
     async () => {
-      await updateVisibleTasks();
-    },
-    { immediate: true }
+      if (!loadingTasks.value) {
+        await updateVisibleTasks();
+      }
+    }
   );
   const traderOrder = [
     'Prapor',

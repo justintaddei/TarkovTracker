@@ -108,17 +108,26 @@ export function useHideoutData() {
   watch(
     queryResult,
     (newResult) => {
-      if (newResult?.hideoutStations) {
-        const newGraph = buildHideoutGraph(newResult.hideoutStations);
-        const newModules = createHideoutModules(newResult.hideoutStations, newGraph);
-        const newNeededItems = extractItemRequirements(newModules);
-        // Update reactive state
-        hideoutStations.value = newResult.hideoutStations;
-        hideoutModules.value = newModules;
-        hideoutGraph.value = newGraph;
-        neededItemHideoutModules.value = newNeededItems;
-      } else {
-        // Reset state if no data
+      try {
+        if (newResult?.hideoutStations) {
+          const newGraph = buildHideoutGraph(newResult.hideoutStations);
+          const newModules = createHideoutModules(newResult.hideoutStations, newGraph);
+          const newNeededItems = extractItemRequirements(newModules);
+          // Update reactive state
+          hideoutStations.value = newResult.hideoutStations;
+          hideoutModules.value = newModules;
+          hideoutGraph.value = newGraph;
+          neededItemHideoutModules.value = newNeededItems;
+        } else {
+          // Reset state if no data
+          hideoutStations.value = [];
+          hideoutModules.value = [];
+          hideoutGraph.value = createGraph();
+          neededItemHideoutModules.value = [];
+        }
+      } catch (error) {
+        console.error('Error processing hideout data:', error);
+        // Reset to safe state on error to prevent stuck loading
         hideoutStations.value = [];
         hideoutModules.value = [];
         hideoutGraph.value = createGraph();

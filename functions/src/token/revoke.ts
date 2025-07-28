@@ -1,5 +1,5 @@
 import { logger } from 'firebase-functions/v2';
-import { onRequest } from 'firebase-functions/v2/https';
+import { onRequest, Request as FirebaseRequest } from 'firebase-functions/v2/https';
 import admin from 'firebase-admin';
 import cors from 'cors';
 import {
@@ -152,13 +152,22 @@ async function _revokeTokenLogic(
   }
 }
 
-const corsHandler = cors({ origin: true }); // Allow all origins, or configure as needed
+const corsHandler = cors({ 
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:8080',
+    'https://tarkovtracker.org',
+    'https://www.tarkovtracker.org'
+  ],
+  credentials: true
+});
 export const revokeToken = onRequest(
   {
     memory: '128MiB',
     timeoutSeconds: 20,
+    cors: true,
   },
-  (req: any, res: any) => {
+  (req: FirebaseRequest, res: any) => {
   corsHandler(req, res, async () => {
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method Not Allowed' });

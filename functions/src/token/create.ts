@@ -23,7 +23,7 @@ interface TokenDocData {
   createdAt: admin.firestore.Timestamp | admin.firestore.FieldValue;
 }
 // Core logic extracted into a separate, testable function
-async function _createTokenLogic(
+export async function _createTokenLogic(
   request: CallableRequest<CreateTokenData>
 ): Promise<{ token: string }> {
   const db: Firestore = admin.firestore();
@@ -137,7 +137,12 @@ async function _createTokenLogic(
   }
 }
 export const createToken = onCall({
-  cors: true,
+  cors: [
+    'http://localhost:5173',
+    'http://localhost:8080',
+    'https://tarkovtracker.org',
+    'https://www.tarkovtracker.org'
+  ],
   memory: '128MiB',
   timeoutSeconds: 20,
 }, _createTokenLogic);

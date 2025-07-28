@@ -256,7 +256,7 @@
       stats: {
         active_tokens: 'Tokens actifs',
         rest: 'REST',
-        api_type: 'Type d\'API',
+        api_type: "Type d'API",
         secure: 'Sécurisé',
         bearer_auth: 'Auth Bearer',
         realtime: 'Temps réel',
@@ -264,7 +264,7 @@
       },
       chips: {
         secure_auth: 'Authentification sécurisée',
-        secure_tooltip: 'Les tokens utilisent l\'authentification Bearer dans l\'en-tête Authorization',
+        secure_tooltip: "Les tokens utilisent l'authentification Bearer dans l'en-tête Authorization",
         realtime_data: 'Données en temps réel',
         realtime_tooltip: 'Vos données de progression sont toujours à jour grâce à la synchronisation en temps réel',
         json_api: 'API JSON',
@@ -272,7 +272,7 @@
       },
       tokens: {
         no_tokens_title: 'Pas encore de tokens API',
-        no_tokens_description: 'Créez votre premier token pour commencer à accéder à l\'API TarkovTracker',
+        no_tokens_description: "Créez votre premier token pour commencer à accéder à l'API TarkovTracker",
         create_first_token: 'Créer votre premier token',
         create_new_token: 'Créer un nouveau token API',
         create_token_button: 'CRÉER UN TOKEN',
@@ -280,9 +280,9 @@
         form: {
           description_label: 'Description du token',
           description_placeholder: 'ex: Tarkov Monitor, Rat Scanner, etc.',
-          description_hint: 'Choisissez un nom descriptif pour identifier l\'objectif de ce token',
+          description_hint: "Choisissez un nom descriptif pour identifier l'objectif de ce token",
           permissions_title: 'Permissions du token',
-          permissions_description: 'Sélectionnez les permissions minimales nécessaires pour votre cas d\'usage. Vous pouvez toujours créer des tokens supplémentaires avec différentes permissions.',
+          permissions_description: "Sélectionnez les permissions minimales nécessaires pour votre cas d'usage. Vous pouvez toujours créer des tokens supplémentaires avec différentes permissions.",
           permissions_error: 'Veuillez sélectionner au moins une permission pour ce token.',
           selected_permissions: 'Permissions sélectionnées',
           active_info: 'Les tokens sont immédiatement actifs et peuvent être révoqués à tout moment',

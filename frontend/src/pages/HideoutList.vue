@@ -95,66 +95,75 @@
   });
 
   const isStoreLoading = computed(() => {
-    // Check if hideout data is still loading
-    if (hideoutLoading.value) return true;
+    try {
+      // Check if hideout data is still loading
+      if (hideoutLoading.value) return true;
 
-    // Check if we have hideout stations data
-    if (!hideoutStations.value || hideoutStations.value.length === 0) {
-      return true;
+      // Check if we have hideout stations data
+      if (!hideoutStations.value || hideoutStations.value.length === 0) {
+        return true;
+      }
+
+      // Check if progress store team data is ready
+      if (
+        !progressStore.visibleTeamStores ||
+        Object.keys(progressStore.visibleTeamStores).length === 0
+      ) {
+        return true;
+      }
+
+      // Remove the hideoutLevels check as it creates a circular dependency
+      // The hideoutLevels computed property needs both hideout stations AND team stores
+      // Since we've already verified both are available above, we can proceed
+      return false;
+    } catch (error) {
+      console.error('Error in hideout loading check:', error);
+      // Return false to prevent stuck loading state on error
+      return false;
     }
-
-    // Check if progress store team data is ready
-    if (
-      !progressStore.visibleTeamStores ||
-      Object.keys(progressStore.visibleTeamStores).length === 0
-    ) {
-      return true;
-    }
-
-    // Check if hideout levels have been computed - this is the key check
-    // The hideoutLevels computation depends on both hideout stations AND team stores
-    if (!progressStore.hideoutLevels || Object.keys(progressStore.hideoutLevels).length === 0) {
-      return true;
-    }
-
-    return false;
   });
   const visibleStations = computed(() => {
-    // Use the comprehensive loading check - don't render until everything is ready
-    if (isStoreLoading.value) {
+    try {
+      // Use the comprehensive loading check - don't render until everything is ready
+      if (isStoreLoading.value) {
+        return [];
+      }
+
+      let hideoutStationList = JSON.parse(JSON.stringify(hideoutStations.value));
+      //Display all upgradeable stations
+      if (activePrimaryView.value === 'available')
+        return hideoutStationList.filter((station) => {
+          const lvl = progressStore.hideoutLevels?.[station.id]?.self || 0;
+          const nextLevelData = station.levels.find((l) => l.level === lvl + 1);
+          if (!nextLevelData) return false;
+          return nextLevelData.stationLevelRequirements.every(
+            (req) => (progressStore.hideoutLevels?.[req.station.id]?.self || 0) >= req.level
+          );
+        });
+      //Display all maxed stations
+      if (activePrimaryView.value === 'maxed')
+        return hideoutStationList.filter(
+          (station) =>
+            (progressStore.hideoutLevels?.[station.id]?.self || 0) === station.levels.length
+        );
+      //Display all locked stations
+      if (activePrimaryView.value === 'locked')
+        return hideoutStationList.filter((station) => {
+          const lvl = progressStore.hideoutLevels?.[station.id]?.self || 0;
+          const nextLevelData = station.levels.find((l) => l.level === lvl + 1);
+          if (!nextLevelData) return false;
+          return !nextLevelData.stationLevelRequirements.every(
+            (req) => (progressStore.hideoutLevels?.[req.station.id]?.self || 0) >= req.level
+          );
+        });
+      //Display all stations
+      if (activePrimaryView.value === 'all') return hideoutStationList;
+      return hideoutStationList;
+    } catch (error) {
+      console.error('Error computing visible stations:', error);
+      // Return empty array on error to prevent stuck states
       return [];
     }
-
-    let hideoutStationList = JSON.parse(JSON.stringify(hideoutStations.value));
-    //Display all upgradeable stations
-    if (activePrimaryView.value === 'available')
-      return hideoutStationList.filter((station) => {
-        const lvl = progressStore.hideoutLevels?.[station.id]?.self || 0;
-        const nextLevelData = station.levels.find((l) => l.level === lvl + 1);
-        if (!nextLevelData) return false;
-        return nextLevelData.stationLevelRequirements.every(
-          (req) => (progressStore.hideoutLevels?.[req.station.id]?.self || 0) >= req.level
-        );
-      });
-    //Display all maxed stations
-    if (activePrimaryView.value === 'maxed')
-      return hideoutStationList.filter(
-        (station) =>
-          (progressStore.hideoutLevels?.[station.id]?.self || 0) === station.levels.length
-      );
-    //Display all locked stations
-    if (activePrimaryView.value === 'locked')
-      return hideoutStationList.filter((station) => {
-        const lvl = progressStore.hideoutLevels?.[station.id]?.self || 0;
-        const nextLevelData = station.levels.find((l) => l.level === lvl + 1);
-        if (!nextLevelData) return false;
-        return !nextLevelData.stationLevelRequirements.every(
-          (req) => (progressStore.hideoutLevels?.[req.station.id]?.self || 0) >= req.level
-        );
-      });
-    //Display all stations
-    if (activePrimaryView.value === 'all') return hideoutStationList;
-    return hideoutStationList;
   });
 </script>
 <style lang="scss" scoped></style>

@@ -13,8 +13,13 @@
   import { fireuser } from '@/plugins/firebase';
   import { markDataMigrated } from '@/plugins/store-initializer';
   import { useTarkovStore } from '@/stores/tarkov';
+  import { useTarkovData } from '@/composables/tarkovdata';
   const appStore = useAppStore();
   const { locale } = useI18n({ useScope: 'global' });
+  
+  // Initialize Tarkov data globally to ensure it's available for any route
+  useTarkovData();
+  
   onMounted(async () => {
     // Check our locale settings
     if (appStore.localeOverride) {

@@ -212,21 +212,33 @@ export function useTaskData() {
   watch(
     queryResult,
     (newResult) => {
-      if (newResult?.tasks) {
-        const newGraph = buildTaskGraph(newResult.tasks);
-        const processedData = processTaskData(newResult.tasks);
-        const enhancedTasks = enhanceTasksWithRelationships(newResult.tasks, newGraph);
+      try {
+        if (newResult?.tasks) {
+          const newGraph = buildTaskGraph(newResult.tasks);
+          const processedData = processTaskData(newResult.tasks);
+          const enhancedTasks = enhanceTasksWithRelationships(newResult.tasks, newGraph);
 
-        // Update reactive state
-        tasks.value = enhancedTasks;
-        taskGraph.value = newGraph;
-        mapTasks.value = processedData.tempMapTasks;
-        objectiveMaps.value = processedData.tempObjectiveMaps;
-        objectiveGPS.value = processedData.tempObjectiveGPS;
-        alternativeTasks.value = processedData.tempAlternativeTasks;
-        neededItemTaskObjectives.value = processedData.tempNeededObjectives;
-      } else {
-        // Reset state if no data
+          // Update reactive state
+          tasks.value = enhancedTasks;
+          taskGraph.value = newGraph;
+          mapTasks.value = processedData.tempMapTasks;
+          objectiveMaps.value = processedData.tempObjectiveMaps;
+          objectiveGPS.value = processedData.tempObjectiveGPS;
+          alternativeTasks.value = processedData.tempAlternativeTasks;
+          neededItemTaskObjectives.value = processedData.tempNeededObjectives;
+        } else {
+          // Reset state if no data
+          tasks.value = [];
+          taskGraph.value = createGraph();
+          mapTasks.value = {};
+          objectiveMaps.value = {};
+          objectiveGPS.value = {};
+          alternativeTasks.value = {};
+          neededItemTaskObjectives.value = [];
+        }
+      } catch (error) {
+        console.error('Error processing task data:', error);
+        // Reset to safe state on error to prevent stuck loading
         tasks.value = [];
         taskGraph.value = createGraph();
         mapTasks.value = {};

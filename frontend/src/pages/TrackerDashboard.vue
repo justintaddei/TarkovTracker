@@ -10,13 +10,16 @@
     >
       <div class="text-body-2">
         <div class="mb-1">
-          <strong>PvP and PvE modes have been added!</strong> However, this update likely caused progress loss.
+          <strong>PvP and PvE modes have been added!</strong> However, this update likely caused
+          progress loss.
         </div>
         <div class="mb-1">
-          Please update your game mode data using the settings in the top right of the site to restore your progress.
+          Please update your game mode data using the settings in the top right of the site to
+          restore your progress.
         </div>
         <div>
-          <strong>Note:</strong> Due to breaking API changes, Tarkov Monitor and Rat Scanner integrations will not work until the API is fully tested and those projects are updated.
+          <strong>Note:</strong> Due to breaking API changes, Tarkov Monitor and Rat Scanner
+          integrations will not work until the API is fully tested and those projects are updated.
         </div>
       </div>
     </v-alert>

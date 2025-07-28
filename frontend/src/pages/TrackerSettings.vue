@@ -10,16 +10,24 @@
     <!-- Hero Section -->
     <v-row justify="center" class="mb-8">
       <v-col cols="12" md="10" lg="8">
-        <v-card 
-          class="pa-6 text-center" 
-          variant="flat" 
+        <v-card
+          class="pa-6 text-center"
+          variant="flat"
           color="primary"
-          style="background: linear-gradient(135deg, rgba(var(--v-theme-primary), 0.8) 0%, rgba(var(--v-theme-secondary), 0.6) 100%)"
+          style="
+            background: linear-gradient(
+              135deg,
+              rgba(var(--v-theme-primary), 0.8) 0%,
+              rgba(var(--v-theme-secondary), 0.6) 100%
+            );
+          "
           role="banner"
           aria-labelledby="api-hero-title"
         >
           <v-icon size="64" class="mb-4" color="white">mdi-api</v-icon>
-          <h1 id="api-hero-title" class="text-h3 font-weight-bold mb-3 text-white">{{ $t('page.api.title') }}</h1>
+          <h1 id="api-hero-title" class="text-h3 font-weight-bold mb-3 text-white">
+            {{ $t('page.api.title') }}
+          </h1>
           <p class="text-h6 mb-4 text-white opacity-90">
             {{ $t('page.api.hero.description') }}
           </p>
@@ -50,33 +58,65 @@
     </v-row>
 
     <!-- Quick Stats Section -->
-    <v-row v-if="fireuser.loggedIn" justify="center" class="mb-6" role="region" aria-label="API Statistics">
+    <v-row
+      v-if="fireuser.loggedIn"
+      justify="center"
+      class="mb-6"
+      role="region"
+      aria-label="API Statistics"
+    >
       <v-col cols="12" sm="6" md="3">
-        <v-card class="pa-4 text-center" variant="elevated" color="success" aria-label="Active API tokens count">
+        <v-card
+          class="pa-4 text-center"
+          variant="elevated"
+          color="success"
+          aria-label="Active API tokens count"
+        >
           <v-icon size="32" class="mb-2" color="white">mdi-check-circle</v-icon>
           <div class="text-h5 font-weight-bold text-white">{{ userTokenCount }}</div>
-          <div class="text-body-2 text-white opacity-80">{{ $t('page.api.stats.active_tokens') }}</div>
+          <div class="text-body-2 text-white opacity-80">
+            {{ $t('page.api.stats.active_tokens') }}
+          </div>
         </v-card>
       </v-col>
       <v-col cols="12" sm="6" md="3">
-        <v-card class="pa-4 text-center" variant="elevated" color="info" aria-label="API architecture type">
+        <v-card
+          class="pa-4 text-center"
+          variant="elevated"
+          color="info"
+          aria-label="API architecture type"
+        >
           <v-icon size="32" class="mb-2" color="white">mdi-web</v-icon>
           <div class="text-h5 font-weight-bold text-white">{{ $t('page.api.stats.rest') }}</div>
           <div class="text-body-2 text-white opacity-80">{{ $t('page.api.stats.api_type') }}</div>
         </v-card>
       </v-col>
       <v-col cols="12" sm="6" md="3">
-        <v-card class="pa-4 text-center" variant="elevated" color="warning" aria-label="Security authentication method">
+        <v-card
+          class="pa-4 text-center"
+          variant="elevated"
+          color="warning"
+          aria-label="Security authentication method"
+        >
           <v-icon size="32" class="mb-2" color="white">mdi-shield-check</v-icon>
           <div class="text-h5 font-weight-bold text-white">{{ $t('page.api.stats.secure') }}</div>
-          <div class="text-body-2 text-white opacity-80">{{ $t('page.api.stats.bearer_auth') }}</div>
+          <div class="text-body-2 text-white opacity-80">
+            {{ $t('page.api.stats.bearer_auth') }}
+          </div>
         </v-card>
       </v-col>
       <v-col cols="12" sm="6" md="3">
-        <v-card class="pa-4 text-center" variant="elevated" color="primary" aria-label="Data synchronization type">
+        <v-card
+          class="pa-4 text-center"
+          variant="elevated"
+          color="primary"
+          aria-label="Data synchronization type"
+        >
           <v-icon size="32" class="mb-2" color="white">mdi-clock-fast</v-icon>
           <div class="text-h5 font-weight-bold text-white">{{ $t('page.api.stats.realtime') }}</div>
-          <div class="text-body-2 text-white opacity-80">{{ $t('page.api.stats.data_access') }}</div>
+          <div class="text-body-2 text-white opacity-80">
+            {{ $t('page.api.stats.data_access') }}
+          </div>
         </v-card>
       </v-col>
     </v-row>
@@ -92,34 +132,19 @@
             <!-- Quick Help Chips -->
             <div class="px-4 mb-4">
               <div class="d-flex flex-wrap gap-2">
-                <v-chip
-                  color="info"
-                  variant="flat"
-                  size="small"
-                  prepend-icon="mdi-shield-check"
-                >
+                <v-chip color="info" variant="flat" size="small" prepend-icon="mdi-shield-check">
                   <v-tooltip activator="parent" location="top">
                     {{ $t('page.api.chips.secure_tooltip') }}
                   </v-tooltip>
                   {{ $t('page.api.chips.secure_auth') }}
                 </v-chip>
-                <v-chip
-                  color="success"
-                  variant="flat"
-                  size="small"
-                  prepend-icon="mdi-sync"
-                >
+                <v-chip color="success" variant="flat" size="small" prepend-icon="mdi-sync">
                   <v-tooltip activator="parent" location="top">
                     {{ $t('page.api.chips.realtime_tooltip') }}
                   </v-tooltip>
                   {{ $t('page.api.chips.realtime_data') }}
                 </v-chip>
-                <v-chip
-                  color="warning"
-                  variant="flat"
-                  size="small"
-                  prepend-icon="mdi-code-json"
-                >
+                <v-chip color="warning" variant="flat" size="small" prepend-icon="mdi-code-json">
                   <v-tooltip activator="parent" location="top">
                     {{ $t('page.api.chips.json_tooltip') }}
                   </v-tooltip>
@@ -164,15 +189,18 @@
       </v-col>
     </v-row>
 
-
     <!-- Settings Cards Grid -->
     <v-row justify="center" class="mb-6">
       <!-- Data Migration -->
-      <v-col v-if="fireuser.loggedIn" cols="12" sm="6" md="6" lg="4" xl="4" class="d-flex">
+      <v-col v-if="fireuser.loggedIn" cols="12" sm="12" md="8" lg="6" xl="6" class="d-flex">
         <data-migration-card class="flex-grow-1" />
       </v-col>
-    </v-row>
 
+      <!-- Account Deletion -->
+      <v-col v-if="fireuser.loggedIn" cols="12" sm="12" md="4" lg="6" xl="6" class="d-flex">
+        <account-deletion-card class="flex-grow-1" />
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 <script setup>
@@ -181,11 +209,12 @@
   import { useLiveData } from '@/composables/livedata';
   import ApiTokens from '@/features/settings/ApiTokens';
   import DataMigrationCard from '@/features/settings/DataMigrationCard';
+  import AccountDeletionCard from '@/features/settings/AccountDeletionCard.vue';
   import FittedCard from '@/features/ui/FittedCard';
 
   const { useSystemStore } = useLiveData();
   const { systemStore } = useSystemStore();
-  
+
   const tokensSection = ref(null);
 
   // Computed properties for token count
@@ -196,9 +225,9 @@
   // Scroll to tokens section
   const scrollToTokens = () => {
     if (tokensSection.value) {
-      tokensSection.value.$el.scrollIntoView({ 
+      tokensSection.value.$el.scrollIntoView({
         behavior: 'smooth',
-        block: 'start'
+        block: 'start',
       });
     }
   };
@@ -226,7 +255,7 @@
     .text-h3 {
       font-size: 2rem !important;
     }
-    
+
     .text-h6 {
       font-size: 1.125rem !important;
     }
@@ -236,19 +265,19 @@
     .text-h3 {
       font-size: 1.75rem !important;
     }
-    
+
     .d-flex.justify-center.gap-3 {
       flex-direction: column;
       gap: 0.75rem;
-      
+
       .v-btn {
         width: 100%;
       }
     }
-    
+
     .d-flex.flex-wrap.gap-2 {
       gap: 0.25rem;
-      
+
       .v-chip {
         margin: 0.125rem;
       }

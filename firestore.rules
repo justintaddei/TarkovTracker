@@ -20,17 +20,17 @@ service cloud.firestore {
     
     function validUserData(){
       // Validate the new game mode structure
-      return request.resource.data.keys().hasAll(['currentGameMode', 'pvp', 'pve']) &&
+      return request.resource.data.keys().hasAll(['currentGameMode', 'gameEdition', 'pvp', 'pve']) &&
              request.resource.data.currentGameMode in ['pvp', 'pve'] &&
+             request.resource.data.gameEdition is number &&
+             request.resource.data.gameEdition >= 1 && request.resource.data.gameEdition <= 6 &&
              validGameModeData(request.resource.data.pvp) &&
              validGameModeData(request.resource.data.pve);
     }
     
     function validGameModeData(gameModeData){
-      return gameModeData.keys().hasAll(['level', 'gameEdition', 'pmcFaction']) &&
+      return gameModeData.keys().hasAll(['level', 'pmcFaction']) &&
              gameModeData.level is number &&
-             gameModeData.gameEdition is number &&
-             gameModeData.gameEdition >= 1 && gameModeData.gameEdition <= 6 &&
              gameModeData.pmcFaction in ['USEC', 'BEAR'];
     }
     

@@ -14,8 +14,7 @@
         class="mb-4"
       >
         <template #item="{ props, item }">
-          <v-list-item v-bind="props" :prepend-icon="item.raw.icon">
-          </v-list-item>
+          <v-list-item v-bind="props" :prepend-icon="item.raw.icon"> </v-list-item>
         </template>
       </v-select>
       <display-name-input v-if="fireuser.loggedIn" />
@@ -32,20 +31,12 @@
         <template #item="{ item, props }">
           <v-list-item v-bind="props">
             <template #prepend>
-              <v-img
-                :src="factionImage(item.value)"
-                width="1.5em"
-                class="faction-invert mr-1"
-              />
+              <v-img :src="factionImage(item.value)" width="1.5em" class="faction-invert mr-1" />
             </template>
           </v-list-item>
         </template>
         <template #prepend-inner>
-          <v-img
-            :src="factionImage(currentPMCFaction)"
-            width="1em"
-            class="faction-invert ma-1"
-          />
+          <v-img :src="factionImage(currentPMCFaction)" width="1em" class="faction-invert ma-1" />
         </template>
       </v-select>
       <v-select
@@ -110,14 +101,12 @@
       </v-btn>
       <v-dialog v-if="fireuser.loggedIn" v-model="resetDialog">
         <template #activator="{ props }">
-          <v-btn
-            color="warning"
-            prepend-icon="mdi-alert"
-            class="mt-4"
-            width="100%"
-            v-bind="props"
-          >
-            {{ $t('app_bar.overflow_menu.reset_gamemode_data', { mode: selectedGameMode.toUpperCase() }) }}
+          <v-btn color="warning" prepend-icon="mdi-alert" class="mt-4" width="100%" v-bind="props">
+            {{
+              $t('app_bar.overflow_menu.reset_gamemode_data', {
+                mode: selectedGameMode.toUpperCase(),
+              })
+            }}
           </v-btn>
         </template>
         <v-row class="justify-center">
@@ -130,7 +119,11 @@
                 <v-container class="ma-0 pa-0">
                   <v-row no-gutters>
                     <v-col cols="12">
-                      {{ $t('app_bar.overflow_menu.reset_gamemode_confirmation', { mode: selectedGameMode.toUpperCase() }) }}
+                      {{
+                        $t('app_bar.overflow_menu.reset_gamemode_confirmation', {
+                          mode: selectedGameMode.toUpperCase(),
+                        })
+                      }}
                     </v-col>
                   </v-row>
                   <v-row>
@@ -144,12 +137,75 @@
                           resetDialog = false;
                         "
                       >
-                        {{ $t('app_bar.overflow_menu.reset_gamemode_confirm_button', { mode: selectedGameMode.toUpperCase() }) }}
+                        {{
+                          $t('app_bar.overflow_menu.reset_gamemode_confirm_button', {
+                            mode: selectedGameMode.toUpperCase(),
+                          })
+                        }}
                       </v-btn>
                     </v-col>
                     <v-col cols="12" md="6">
                       <v-btn color="primary" block @click="resetDialog = false">{{
                         $t('app_bar.overflow_menu.reset_gamemode_cancel_button')
+                      }}</v-btn>
+                    </v-col>
+                  </v-row>
+                </v-container>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-dialog>
+      <v-dialog v-if="fireuser.loggedIn" v-model="fullResetDialog">
+        <template #activator="{ props }">
+          <v-btn
+            color="error"
+            prepend-icon="mdi-account-remove"
+            class="mt-4"
+            width="100%"
+            v-bind="props"
+          >
+            {{ $t('app_bar.overflow_menu.full_account_reset') }}
+          </v-btn>
+        </template>
+        <v-row class="justify-center">
+          <v-col cols="auto">
+            <v-card
+              :title="$t('app_bar.overflow_menu.full_account_reset_confirm_title')"
+              style="width: fit-content"
+            >
+              <v-card-text>
+                <v-container class="ma-0 pa-0">
+                  <v-row no-gutters>
+                    <v-col cols="12">
+                      <v-alert
+                        type="error"
+                        variant="tonal"
+                        class="mb-4"
+                        prepend-icon="mdi-alert-circle"
+                      >
+                        {{ $t('app_bar.overflow_menu.full_account_reset_warning') }}
+                      </v-alert>
+                      {{ $t('app_bar.overflow_menu.full_account_reset_confirmation') }}
+                    </v-col>
+                  </v-row>
+                  <v-row>
+                    <v-col cols="12" md="6">
+                      <v-btn
+                        color="error"
+                        block
+                        prepend-icon="mdi-account-remove"
+                        @click="
+                          tarkovStore.resetOnlineProfile();
+                          fullResetDialog = false;
+                        "
+                      >
+                        {{ $t('app_bar.overflow_menu.full_account_reset_confirm_button') }}
+                      </v-btn>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-btn color="primary" block @click="fullResetDialog = false">{{
+                        $t('app_bar.overflow_menu.full_account_reset_cancel_button')
                       }}</v-btn>
                     </v-col>
                   </v-row>
@@ -174,7 +230,8 @@
   const userStore = useUserStore();
   const tarkovStore = useTarkovStore();
   const resetDialog = ref(false);
-  
+  const fullResetDialog = ref(false);
+
   const unhideTips = () => {
     userStore.unhideTips();
   };
@@ -263,7 +320,10 @@
   });
   const currentLocale = computed({
     get() {
-      return localeItems.value.filter((localeItem) => localeItem.value == locale.value)[0] || localeItems.value[0];
+      return (
+        localeItems.value.filter((localeItem) => localeItem.value == locale.value)[0] ||
+        localeItems.value[0]
+      );
     },
     // setter
     set(newValue) {
@@ -274,7 +334,7 @@
   });
 </script>
 <style lang="scss" scoped>
-.faction-invert {
-  filter: invert(1);
-}
+  .faction-invert {
+    filter: invert(1);
+  }
 </style>
