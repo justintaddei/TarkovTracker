@@ -468,56 +468,56 @@ export const createTeamHttp = onRequest(
     timeoutSeconds: 20,
   },
   async (req: FirebaseRequest, res: any) => {
-  // Set CORS headers
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    // Set CORS headers
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // Handle preflight OPTIONS request
-  if (req.method === 'OPTIONS') {
-    res.status(200).send('');
-    return;
-  }
-
-  if (req.method !== 'POST') {
-    res.status(405).send('Method Not Allowed');
-    return;
-  }
-
-  try {
-    // Extract auth token from Authorization header
-    const authToken = req.headers.authorization?.replace('Bearer ', '');
-    if (!authToken) {
-      res.status(401).json({ error: 'Authentication required' });
+    // Handle preflight OPTIONS request
+    if (req.method === 'OPTIONS') {
+      res.status(200).send('');
       return;
     }
 
-    // Verify the token
-    const decodedToken = await admin.auth().verifyIdToken(authToken);
-
-    // Create a mock callable request
-    const callableRequest: CallableRequest<CreateTeamData> = {
-      auth: {
-        uid: decodedToken.uid,
-        token: decodedToken,
-      },
-      data: req.body,
-      rawRequest: req as unknown as FirebaseRequest,
-      acceptsStreaming: false,
-    };
-
-    // Call the existing logic
-    const result = await _createTeamLogic(callableRequest);
-    res.status(200).json(result);
-  } catch (error) {
-    logger.error('Error in createTeamHttp:', error);
-    if (error instanceof HttpsError) {
-      res.status(400).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: 'Internal server error' });
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed');
+      return;
     }
-  }
-});
+
+    try {
+      // Extract auth token from Authorization header
+      const authToken = req.headers.authorization?.replace('Bearer ', '');
+      if (!authToken) {
+        res.status(401).json({ error: 'Authentication required' });
+        return;
+      }
+
+      // Verify the token
+      const decodedToken = await admin.auth().verifyIdToken(authToken);
+
+      // Create a mock callable request
+      const callableRequest: CallableRequest<CreateTeamData> = {
+        auth: {
+          uid: decodedToken.uid,
+          token: decodedToken,
+        },
+        data: req.body,
+        rawRequest: req as unknown as FirebaseRequest,
+        acceptsStreaming: false,
+      };
+
+      // Call the existing logic
+      const result = await _createTeamLogic(callableRequest);
+      res.status(200).json(result);
+    } catch (error) {
+      logger.error('Error in createTeamHttp:', error);
+      if (error instanceof HttpsError) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    }
+  });
 
 // Alternative HTTPS endpoint for createToken with explicit CORS handling
 export const createTokenHttp = onRequest(
@@ -527,107 +527,107 @@ export const createTokenHttp = onRequest(
     cors: true,
   },
   async (req: FirebaseRequest, res: any) => {
-  // Set comprehensive CORS headers for production
-  const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:8080', 
-    'https://tarkovtracker.org',
-    'https://www.tarkovtracker.org'
-  ];
-  
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.set('Access-Control-Allow-Origin', origin);
-  } else {
-    res.set('Access-Control-Allow-Origin', 'https://tarkovtracker.org');
-  }
-  
-  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.set('Access-Control-Allow-Credentials', 'true');
-  res.set('Access-Control-Max-Age', '3600');
+    // Set comprehensive CORS headers for production
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:8080',
+      'https://tarkovtracker.org',
+      'https://www.tarkovtracker.org'
+    ];
 
-  // Handle preflight OPTIONS request
-  if (req.method === 'OPTIONS') {
-    res.status(200).send('');
-    return;
-  }
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin ?? '')) {
+      res.set('Access-Control-Allow-Origin', origin);
+    } else {
+      res.set('Access-Control-Allow-Origin', 'https://tarkovtracker.org');
+    }
 
-  if (req.method !== 'POST') {
-    res.status(405).send('Method Not Allowed');
-    return;
-  }
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Allow-Credentials', 'true');
+    res.set('Access-Control-Max-Age', '3600');
 
-  try {
-    // Log request details for debugging
-    logger.log('CreateTokenHttp request received', {
-      method: req.method,
-      origin: req.headers.origin,
-      contentType: req.headers['content-type'],
-      hasAuth: !!req.headers.authorization,
-      bodyKeys: req.body ? Object.keys(req.body) : 'no body'
-    });
-
-    // Extract auth token from Authorization header
-    const authToken = req.headers.authorization?.replace('Bearer ', '');
-    if (!authToken) {
-      logger.warn('No auth token provided in createTokenHttp');
-      res.status(401).json({ error: 'Authentication required' });
+    // Handle preflight OPTIONS request
+    if (req.method === 'OPTIONS') {
+      res.status(200).send('');
       return;
     }
 
-    // Verify the token
-    const decodedToken = await admin.auth().verifyIdToken(authToken);
-    logger.log('Token verified for user', { uid: decodedToken.uid });
-
-    // Create a mock callable request
-    const callableRequest: CallableRequest<{ note: string; permissions: string[] }> = {
-      auth: {
-        uid: decodedToken.uid,
-        token: decodedToken,
-      },
-      data: req.body,
-      rawRequest: req as unknown as FirebaseRequest,
-      acceptsStreaming: false,
-    };
-
-    // Call the existing logic
-    const result = await _createTokenLogic(callableRequest);
-    logger.log('Token created successfully via HTTP', { uid: decodedToken.uid });
-    res.status(200).json(result);
-  } catch (error) {
-    logger.error('Error in createTokenHttp:', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      type: error instanceof HttpsError ? 'HttpsError' : typeof error
-    });
-    
-    if (error instanceof HttpsError) {
-      const statusMap: Record<string, number> = {
-        'invalid-argument': 400,
-        'unauthenticated': 401,
-        'permission-denied': 403,
-        'not-found': 404,
-        'resource-exhausted': 429,
-        'internal': 500,
-        'ok': 200,
-        'cancelled': 499,
-        'unknown': 500,
-        'deadline-exceeded': 504,
-        'already-exists': 409,
-        'failed-precondition': 400,
-        'aborted': 409,
-        'out-of-range': 400,
-        'unavailable': 503,
-        'data-loss': 500
-      };
-      const status = statusMap[error.code] || 500;
-      res.status(status).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: 'Internal server error' });
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed');
+      return;
     }
-  }
-});
+
+    try {
+      // Log request details for debugging
+      logger.log('CreateTokenHttp request received', {
+        method: req.method,
+        origin: req.headers.origin,
+        contentType: req.headers['content-type'],
+        hasAuth: !!req.headers.authorization,
+        bodyKeys: req.body ? Object.keys(req.body) : 'no body'
+      });
+
+      // Extract auth token from Authorization header
+      const authToken = req.headers.authorization?.replace('Bearer ', '');
+      if (!authToken) {
+        logger.warn('No auth token provided in createTokenHttp');
+        res.status(401).json({ error: 'Authentication required' });
+        return;
+      }
+
+      // Verify the token
+      const decodedToken = await admin.auth().verifyIdToken(authToken);
+      logger.log('Token verified for user', { uid: decodedToken.uid });
+
+      // Create a mock callable request
+      const callableRequest: CallableRequest<{ note: string; permissions: string[] }> = {
+        auth: {
+          uid: decodedToken.uid,
+          token: decodedToken,
+        },
+        data: req.body,
+        rawRequest: req as unknown as FirebaseRequest,
+        acceptsStreaming: false,
+      };
+
+      // Call the existing logic
+      const result = await _createTokenLogic(callableRequest);
+      logger.log('Token created successfully via HTTP', { uid: decodedToken.uid });
+      res.status(200).json(result);
+    } catch (error) {
+      logger.error('Error in createTokenHttp:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        type: error instanceof HttpsError ? 'HttpsError' : typeof error
+      });
+
+      if (error instanceof HttpsError) {
+        const statusMap: Record<string, number> = {
+          'invalid-argument': 400,
+          'unauthenticated': 401,
+          'permission-denied': 403,
+          'not-found': 404,
+          'resource-exhausted': 429,
+          'internal': 500,
+          'ok': 200,
+          'cancelled': 499,
+          'unknown': 500,
+          'deadline-exceeded': 504,
+          'already-exists': 409,
+          'failed-precondition': 400,
+          'aborted': 409,
+          'out-of-range': 400,
+          'unavailable': 503,
+          'data-loss': 500
+        };
+        const status = statusMap[error.code] || 500;
+        res.status(status).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    }
+  });
 
 export const joinTeam = onCall(
   {
@@ -666,7 +666,7 @@ export const deleteUserAccount = onCall(
     }
 
     const { confirmationText } = request.data || {};
-    
+
     if (confirmationText !== 'DELETE MY ACCOUNT') {
       throw new HttpsError('invalid-argument', 'Invalid confirmation text');
     }
@@ -682,7 +682,7 @@ export const deleteUserAccount = onCall(
       // Use the service directly instead of going through HTTP handler
       const { UserDeletionService } = await import('./handlers/userDeletionHandler.js');
       const userDeletionService = new UserDeletionService();
-      
+
       const result = await userDeletionService.deleteUserAccount(request.auth.uid, {
         confirmationText
       });
@@ -690,7 +690,7 @@ export const deleteUserAccount = onCall(
       return result;
     } catch (error) {
       logger.error('Account deletion error:', error);
-      
+
       // Handle ApiError types properly
       if (error instanceof Error && 'statusCode' in error) {
         const apiError = error as Error & { statusCode: number };
@@ -702,7 +702,7 @@ export const deleteUserAccount = onCall(
           throw new HttpsError('permission-denied', apiError.message);
         }
       }
-      
+
       throw new HttpsError('internal', error instanceof Error ? error.message : 'Account deletion failed');
     }
   }
