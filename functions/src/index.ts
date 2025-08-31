@@ -535,8 +535,9 @@ export const createTokenHttp = onRequest(
     'https://www.tarkovtracker.org'
   ];
   
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
+  const originHeader = req.headers.origin;
+  const origin = typeof originHeader === 'string' ? originHeader : undefined;
+  if (origin && allowedOrigins.includes(origin)) {
     res.set('Access-Control-Allow-Origin', origin);
   } else {
     res.set('Access-Control-Allow-Origin', 'https://tarkovtracker.org');
